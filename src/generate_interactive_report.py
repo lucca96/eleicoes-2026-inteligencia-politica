@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -26,6 +27,14 @@ def number_or_zero(value: object) -> float:
     if pd.isna(value):
         return 0.0
     return float(value)
+
+
+def latest_data_update_label() -> str:
+    paths = list(RAW_CAMARA_DIR.glob("*.csv"))
+    if not paths:
+        return "sem data local"
+    latest_mtime = max(path.stat().st_mtime for path in paths)
+    return datetime.fromtimestamp(latest_mtime).strftime("%d/%m/%Y")
 
 
 def add_group_differences(report_df: pd.DataFrame, group_column: str, suffix: str) -> pd.DataFrame:
@@ -421,6 +430,28 @@ def render_html(report_df: pd.DataFrame) -> str:
     )
     states = sorted(report_df["siglaUf"].dropna().unique().tolist())
     parties = sorted(report_df["siglaPartido"].dropna().unique().tolist())
+    data_updated_label = latest_data_update_label()
+
+    def compact_money(value: float) -> str:
+        abs_value = abs(value)
+        if abs_value >= 1_000_000_000:
+            return f"R$ {round(value / 1_000_000_000):,.0f} bi".replace(",", ".")
+        if abs_value >= 1_000_000:
+            return f"R$ {round(value / 1_000_000):,.0f} mi".replace(",", ".")
+        if abs_value >= 1_000:
+            return f"R$ {round(value / 1_000):,.0f} mil".replace(",", ".")
+        return f"R$ {value:,.0f}".replace(",", ".")
+
+    initial_kpis = {
+        "deputies": f"{len(report_df):,}".replace(",", "."),
+        "expenses": compact_money(float(report_df["valor_liquido_total"].sum())),
+        "salary": compact_money(float(report_df["valor_subsidio_bruto_total"].sum())),
+        "cost": compact_money(float(report_df["custo_total_estimado"].sum())),
+        "presence": f"{report_df['indice_presenca_relativa'].mean():.1f}%".replace(".", ","),
+        "yoy": compact_money(float(report_df["diferenca_yoy"].sum())),
+        "unjustified_absence": f"{report_df['pct_ausencia_nao_justificada'].mean():.1f}%".replace(".", ","),
+        "pec_votes": f"{int(report_df['qtd_votacoes_pec'].sum()):,}".replace(",", "."),
+    }
 
     data_json = json.dumps(records, ensure_ascii=False)
     categories_json = json.dumps(category_records, ensure_ascii=False)
@@ -674,18 +705,92 @@ def render_html(report_df: pd.DataFrame) -> str:
     .card.accent-blue {{ border-top: 4px solid var(--gov-blue); }}
     .card.accent-green {{ border-top: 4px solid var(--gov-green); }}
     .card.accent-yellow {{ border-top: 4px solid var(--gov-yellow); }}
+    .card.loading, .chart-loading {{
+      opacity: 0.52;
+      pointer-events: none;
+      animation: pulse 0.7s ease-in-out infinite alternate;
+    }}
+    @keyframes pulse {{ to {{ opacity: 0.78; }} }}
     .metric-label {{
       color: var(--muted);
       font-size: 12px;
       text-transform: uppercase;
       font-weight: 740;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }}
+    .info-tip {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 17px;
+      height: 17px;
+      border: 1px solid #b8c8df;
+      border-radius: 999px;
+      color: var(--gov-blue);
+      background: #fff;
+      font-size: 11px;
+      font-style: normal;
+      cursor: help;
+      position: relative;
+      text-transform: none;
+    }}
+    .info-tip:hover::after, .info-tip:focus::after {{
+      content: attr(data-tip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      z-index: 40;
+      width: min(280px, 82vw);
+      border-radius: 10px;
+      background: var(--gov-blue-dark);
+      color: #fff;
+      padding: 9px 10px;
+      font-size: 12px;
+      line-height: 1.35;
+      box-shadow: var(--shadow);
+      text-transform: none;
+      font-weight: 560;
     }}
     .metric-value {{
       margin-top: 10px;
       color: var(--gov-blue-dark);
-      font-size: 24px;
+      font-size: 30px;
       font-weight: 780;
       white-space: nowrap;
+    }}
+    .filter-context {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }}
+    .filter-context strong {{ color: var(--gov-blue-dark); }}
+    .chip {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #b8c8df;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--gov-blue-dark);
+      padding: 5px 9px;
+      font-weight: 700;
+    }}
+    .chip button {{
+      width: 18px;
+      height: 18px;
+      border: 0;
+      border-radius: 999px;
+      background: #e7eef8;
+      color: var(--gov-blue);
+      cursor: pointer;
+      font-weight: 800;
+      line-height: 1;
     }}
     .insight-row {{
       display: grid;
@@ -809,6 +914,44 @@ def render_html(report_df: pd.DataFrame) -> str:
       box-shadow: var(--shadow);
       background: #fff;
     }}
+    .table-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }}
+    .table-actions .table-status {{
+      color: var(--muted);
+      font-size: 13px;
+    }}
+    .action-button {{
+      min-height: 36px;
+      border: 1px solid #b8c8df;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--gov-blue);
+      padding: 7px 12px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 760;
+      cursor: pointer;
+    }}
+    .action-button:disabled {{
+      opacity: 0.45;
+      cursor: not-allowed;
+    }}
+    .pagination {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }}
     .full-span {{ grid-column: 1 / -1; }}
     .pec-tools {{
       display: grid;
@@ -922,10 +1065,30 @@ def render_html(report_df: pd.DataFrame) -> str:
       text-transform: uppercase;
       background: #f0f5ff;
     }}
+    th[data-sort] {{
+      cursor: pointer;
+      user-select: none;
+    }}
+    th[data-sort]::after {{
+      content: " ↕";
+      color: var(--muted);
+      font-weight: 700;
+    }}
+    th[data-sort].sorted-asc::after {{ content: " ↑"; color: var(--gov-blue); }}
+    th[data-sort].sorted-desc::after {{ content: " ↓"; color: var(--gov-blue); }}
     tr:nth-child(even) td {{ background: #fbfcff; }}
     td.num, th.num {{ text-align: right; }}
     .positive {{ color: var(--red); }}
     .negative {{ color: var(--gov-green); }}
+    footer {{
+      width: 100%;
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 0 28px 32px;
+      color: var(--muted);
+      font-size: 13px;
+    }}
+    footer a {{ color: var(--gov-blue); font-weight: 720; }}
     @media (max-width: 1100px) {{
       .kpis, .insight-row, .grid {{ grid-template-columns: 1fr 1fr; }}
       .filters {{ grid-template-columns: 1fr 1fr; }}
@@ -1012,6 +1175,7 @@ def render_html(report_df: pd.DataFrame) -> str:
         display: grid;
         gap: 10px;
       }}
+      footer {{ padding-left: 14px; padding-right: 14px; }}
       th, td {{ padding: 9px; }}
     }}
   </style>
@@ -1067,6 +1231,12 @@ def render_html(report_df: pd.DataFrame) -> str:
           <option value="custo_por_presenca">Custo por presença</option>
         </select></label>
       </div>
+      <div class="filter-context" id="activeFilters">
+        <strong>Mostrando:</strong>
+        <span class="chip">Brasil</span>
+        <span class="chip">Todos os partidos</span>
+        <span class="chip">Todos os deputados</span>
+      </div>
       <div class="insight-row">
         <div class="insight"><strong>Mandato atual</strong><span>Dados acumulados da legislatura vigente até a data de referência.</span></div>
         <div class="insight"><strong>Presença formal</strong><span>Ausências justificadas e não justificadas vêm das sessões de plenário.</span></div>
@@ -1076,14 +1246,14 @@ def render_html(report_df: pd.DataFrame) -> str:
     </section>
 
     <section class="kpis" aria-label="Indicadores principais">
-      <div class="card accent-blue"><div class="metric-label">Deputados</div><div class="metric-value" id="kpiDeputies">0</div></div>
-      <div class="card accent-green"><div class="metric-label">Gasto mandato</div><div class="metric-value" id="kpiExpenses">R$ 0</div></div>
-      <div class="card accent-yellow"><div class="metric-label">Remuneração</div><div class="metric-value" id="kpiSalary">R$ 0</div></div>
-      <div class="card accent-blue"><div class="metric-label">Custo total</div><div class="metric-value" id="kpiCost">R$ 0</div></div>
-      <div class="card accent-green"><div class="metric-label">% presença relativa</div><div class="metric-value" id="kpiPresencePct">0%</div></div>
-      <div class="card accent-yellow"><div class="metric-label">Dif. YoY</div><div class="metric-value" id="kpiYoy">R$ 0</div></div>
-      <div class="card accent-blue"><div class="metric-label">% ausência não just.</div><div class="metric-value" id="kpiUnjustifiedAbsence">0%</div></div>
-      <div class="card accent-green"><div class="metric-label">Votações PEC</div><div class="metric-value" id="kpiPecVotes">0</div></div>
+      <div class="card accent-blue"><div class="metric-label">Deputados</div><div class="metric-value" id="kpiDeputies">{initial_kpis["deputies"]}</div></div>
+      <div class="card accent-green"><div class="metric-label">Gasto mandato</div><div class="metric-value" id="kpiExpenses">{initial_kpis["expenses"]}</div></div>
+      <div class="card accent-yellow"><div class="metric-label">Remuneração</div><div class="metric-value" id="kpiSalary">{initial_kpis["salary"]}</div></div>
+      <div class="card accent-blue"><div class="metric-label">Custo total <i class="info-tip" tabindex="0" data-tip="Custo total = cota parlamentar acumulada no mandato + remuneração bruta estimada no mandato.">i</i></div><div class="metric-value" id="kpiCost">{initial_kpis["cost"]}</div></div>
+      <div class="card accent-green"><div class="metric-label">% presença relativa <i class="info-tip" tabindex="0" data-tip="Média do índice de presença relativa dos deputados filtrados, calculada a partir dos registros de presença disponíveis.">i</i></div><div class="metric-value" id="kpiPresencePct">{initial_kpis["presence"]}</div></div>
+      <div class="card accent-yellow"><div class="metric-label">Dif. YoY <i class="info-tip" tabindex="0" data-tip="Diferença YoY = gasto no ano atual até o período disponível menos o mesmo período do ano anterior.">i</i></div><div class="metric-value" id="kpiYoy">{initial_kpis["yoy"]}</div></div>
+      <div class="card accent-blue"><div class="metric-label">% ausência não just. <i class="info-tip" tabindex="0" data-tip="Média percentual das ausências não justificadas em sessões de plenário para os deputados filtrados.">i</i></div><div class="metric-value" id="kpiUnjustifiedAbsence">{initial_kpis["unjustified_absence"]}</div></div>
+      <div class="card accent-green"><div class="metric-label">Votações PEC <i class="info-tip" tabindex="0" data-tip="Total de registros nominais de votação em proposições classificadas como PEC no mandato.">i</i></div><div class="metric-value" id="kpiPecVotes">{initial_kpis["pec_votes"]}</div></div>
     </section>
     <button class="mobile-toggle" type="button" data-toggle-kpis>Mostrar todos os indicadores</button>
 
@@ -1173,26 +1343,35 @@ def render_html(report_df: pd.DataFrame) -> str:
         </div>
         <button class="mobile-toggle detail-toggle" type="button" data-toggle-detail="pecDetailBody">Expandir detalhes das PECs</button>
         <div class="detail-body is-collapsed" id="pecDetailBody">
+        <div class="table-actions">
+          <span class="table-status" id="pecTableStatus">Mostrando 0 de 0 votos</span>
+          <button class="action-button" type="button" id="exportPecCsv">Exportar CSV</button>
+        </div>
         <div class="table-wrap desktop-table">
           <table class="pec-table">
             <thead>
               <tr>
-                <th>Última votação</th>
-                <th>Deputado</th>
-                <th>Partido</th>
-                <th>UF</th>
-                <th>PEC</th>
-                <th>Voto predominante</th>
-                <th class="num">Sim</th>
-                <th class="num">Não</th>
-                <th class="num">Outros</th>
-                <th>Órgão</th>
+                <th data-sort="data_ultima" data-table="pec">Última votação</th>
+                <th data-sort="nome" data-table="pec">Deputado</th>
+                <th data-sort="siglaPartido" data-table="pec">Partido</th>
+                <th data-sort="siglaUf" data-table="pec">UF</th>
+                <th data-sort="proposicao_titulo" data-table="pec">PEC</th>
+                <th data-sort="voto_predominante" data-table="pec">Voto predominante</th>
+                <th class="num" data-sort="votos_sim" data-table="pec">Sim</th>
+                <th class="num" data-sort="votos_nao" data-table="pec">Não</th>
+                <th class="num" data-sort="votos_outros" data-table="pec">Outros</th>
+                <th data-sort="siglaOrgao" data-table="pec">Órgão</th>
               </tr>
             </thead>
             <tbody id="pecVoteBody"></tbody>
           </table>
         </div>
         <div class="mobile-card-list" id="pecVoteCards"></div>
+        <div class="pagination">
+          <button class="action-button" type="button" id="pecPrevPage">Anterior</button>
+          <span id="pecPageStatus">Página 1</span>
+          <button class="action-button" type="button" id="pecNextPage">Próxima</button>
+        </div>
         </div>
       </div>
       </div>
@@ -1205,32 +1384,45 @@ def render_html(report_df: pd.DataFrame) -> str:
       </div>
       <button class="mobile-toggle detail-toggle" type="button" data-toggle-detail="candidateDetailBody">Expandir detalhes por deputado</button>
       <div class="detail-body is-collapsed" id="candidateDetailBody">
+      <div class="table-actions">
+        <span class="table-status" id="candidateTableStatus">Mostrando 0 de 0 deputados</span>
+        <button class="action-button" type="button" id="exportCandidateCsv">Exportar CSV</button>
+      </div>
       <div class="table-wrap desktop-table">
         <table>
         <thead>
           <tr>
-            <th>Deputado</th>
-            <th>Partido</th>
-            <th>UF</th>
-            <th class="num">Gasto</th>
-            <th class="num">Remun.</th>
-            <th class="num">Custo</th>
-            <th class="num">% pres. rel.</th>
-            <th class="num">Aus. just.</th>
-            <th class="num">Aus. nao just.</th>
-            <th class="num">PECs</th>
-            <th class="num">YoY</th>
-            <th class="num">Dif. media candidato</th>
-            <th class="num">Custo/pres.</th>
+            <th data-sort="nome" data-table="candidate">Deputado</th>
+            <th data-sort="siglaPartido" data-table="candidate">Partido</th>
+            <th data-sort="siglaUf" data-table="candidate">UF</th>
+            <th class="num" data-sort="valor_liquido_total" data-table="candidate">Gasto</th>
+            <th class="num" data-sort="valor_subsidio_bruto_total" data-table="candidate">Remun.</th>
+            <th class="num" data-sort="custo_total_estimado" data-table="candidate">Custo</th>
+            <th class="num" data-sort="indice_presenca_relativa" data-table="candidate">% pres. rel.</th>
+            <th class="num" data-sort="pct_ausencia_justificada" data-table="candidate">Aus. just.</th>
+            <th class="num" data-sort="pct_ausencia_nao_justificada" data-table="candidate">Aus. nao just.</th>
+            <th class="num" data-sort="qtd_votacoes_pec" data-table="candidate">PECs</th>
+            <th class="num" data-sort="diferenca_yoy" data-table="candidate">YoY</th>
+            <th class="num" data-sort="dif_gasto_media_candidato" data-table="candidate">Dif. media candidato</th>
+            <th class="num" data-sort="custo_por_presenca" data-table="candidate">Custo/pres.</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
       </table>
       </div>
       <div class="mobile-card-list" id="deputyCardList"></div>
+      <div class="pagination">
+        <button class="action-button" type="button" id="candidatePrevPage">Anterior</button>
+        <span id="candidatePageStatus">Página 1</span>
+        <button class="action-button" type="button" id="candidateNextPage">Próxima</button>
+      </div>
       </div>
     </section>
   </main>
+  <footer>
+    Dados atualizados em: <strong>{data_updated_label}</strong> · Fonte:
+    <a href="https://dadosabertos.camara.leg.br" target="_blank" rel="noopener">Dados Abertos da Câmara</a>
+  </footer>
   <script>
     const DATA = {data_json};
     const CATEGORY_DATA = {categories_json};
@@ -1251,6 +1443,13 @@ def render_html(report_df: pd.DataFrame) -> str:
     const pecFilter = document.getElementById('pecFilter');
     const pecSelect = document.getElementById('pecSelect');
     const partyMetricFilter = document.getElementById('partyMetricFilter');
+    const pageSize = 25;
+    let candidatePage = 1;
+    let pecPage = 1;
+    let candidateSort = {{ field: 'custo_total_estimado', direction: 'desc' }};
+    let pecSort = {{ field: 'data_ultima', direction: 'desc' }};
+    let lastCandidateRows = [];
+    let lastPecRows = [];
 
     function setOptions(select, values, allLabel) {{
       select.innerHTML = '<option value="">' + allLabel + '</option>' +
@@ -1266,6 +1465,50 @@ def render_html(report_df: pd.DataFrame) -> str:
       return formatMoney.format(number);
     }}
 
+    function escapeHtml(value) {{
+      return String(value ?? '').replace(/[&<>"']/g, char => ({{
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }}[char]));
+    }}
+
+    function compareRows(a, b, field, direction) {{
+      const leftRaw = a[field] ?? '';
+      const rightRaw = b[field] ?? '';
+      const leftNumber = Number(leftRaw);
+      const rightNumber = Number(rightRaw);
+      const bothNumeric = !Number.isNaN(leftNumber) && !Number.isNaN(rightNumber) && leftRaw !== '' && rightRaw !== '';
+      const result = bothNumeric
+        ? leftNumber - rightNumber
+        : String(leftRaw).localeCompare(String(rightRaw), 'pt-BR', {{ sensitivity: 'base' }});
+      return direction === 'asc' ? result : -result;
+    }}
+
+    function sortRows(rows, state) {{
+      return [...rows].sort((a, b) => compareRows(a, b, state.field, state.direction));
+    }}
+
+    function getPageRows(rows, page) {{
+      const start = (page - 1) * pageSize;
+      return rows.slice(start, start + pageSize);
+    }}
+
+    function pageLabel(page, total) {{
+      if (!total) return 'Mostrando 0 de 0';
+      const start = (page - 1) * pageSize + 1;
+      const end = Math.min(page * pageSize, total);
+      return `Mostrando ${{formatNumber.format(start)}}-${{formatNumber.format(end)}} de ${{formatNumber.format(total)}}`;
+    }}
+
+    function setLoading(isLoading) {{
+      document.querySelectorAll('.kpis .card, .grid .card').forEach(element => {{
+        element.classList.toggle('loading', isLoading);
+      }});
+    }}
+
     function filteredData() {{
       const state = stateFilter.value;
       const party = partyFilter.value;
@@ -1275,7 +1518,7 @@ def render_html(report_df: pd.DataFrame) -> str:
         (!state || row.siglaUf === state) &&
         (!party || row.siglaPartido === party) &&
         (!name || String(row.nome || '').toLowerCase().includes(name))
-      ).sort((a, b) => Number(b[sortFilter.value] || 0) - Number(a[sortFilter.value] || 0));
+      );
     }}
 
     function filteredPecVotes() {{
@@ -1285,7 +1528,6 @@ def render_html(report_df: pd.DataFrame) -> str:
       const term = pecFilter.value.trim().toLowerCase();
       const selectedPec = pecSelect.value;
 
-      const limit = window.matchMedia('(max-width: 720px)').matches ? 80 : 300;
       return PEC_VOTE_DATA.filter(row => {{
         const haystack = [
           row.proposicao_titulo,
@@ -1301,7 +1543,7 @@ def render_html(report_df: pd.DataFrame) -> str:
           (!selectedPec || row.proposicao_titulo === selectedPec) &&
           (!name || String(row.nome || '').toLowerCase().includes(name)) &&
           (!term || haystack.includes(term));
-      }}).slice(0, limit);
+      }});
     }}
 
     function sum(rows, field) {{
@@ -1458,11 +1700,21 @@ def render_html(report_df: pd.DataFrame) -> str:
     }}
 
     function renderTable(rows) {{
-      document.getElementById('tableBody').innerHTML = rows.slice(0, 120).map(row => `
+      const sortedRows = sortRows(rows, candidateSort);
+      const maxPage = Math.max(Math.ceil(sortedRows.length / pageSize), 1);
+      candidatePage = Math.min(candidatePage, maxPage);
+      const pageRows = getPageRows(sortedRows, candidatePage);
+      document.getElementById('candidateTableStatus').textContent = pageLabel(candidatePage, sortedRows.length) + ' deputados';
+      document.getElementById('candidatePageStatus').textContent = `Página ${{formatNumber.format(candidatePage)}} de ${{formatNumber.format(maxPage)}}`;
+      document.getElementById('candidatePrevPage').disabled = candidatePage <= 1;
+      document.getElementById('candidateNextPage').disabled = candidatePage >= maxPage;
+      lastCandidateRows = sortedRows;
+
+      document.getElementById('tableBody').innerHTML = pageRows.map(row => `
         <tr>
-          <td>${{row.nome || ''}}</td>
-          <td>${{row.siglaPartido || ''}}</td>
-          <td>${{row.siglaUf || ''}}</td>
+          <td>${{escapeHtml(row.nome)}}</td>
+          <td>${{escapeHtml(row.siglaPartido)}}</td>
+          <td>${{escapeHtml(row.siglaUf)}}</td>
           <td class="num">${{formatMoney.format(Number(row.valor_liquido_total || 0))}}</td>
           <td class="num">${{formatMoney.format(Number(row.valor_subsidio_bruto_total || 0))}}</td>
           <td class="num">${{formatMoney.format(Number(row.custo_total_estimado || 0))}}</td>
@@ -1476,67 +1728,152 @@ def render_html(report_df: pd.DataFrame) -> str:
         </tr>
       `).join('');
 
-      document.getElementById('deputyCardList').innerHTML = rows.slice(0, 40).map(row => `
+      document.getElementById('deputyCardList').innerHTML = pageRows.map(row => `
         <article class="mobile-data-card">
           <div class="mobile-card-title">
-            <span>${{row.nome || ''}}</span>
-            <span>${{row.siglaPartido || ''}}/${{row.siglaUf || ''}}</span>
+            <span>${{escapeHtml(row.nome)}}</span>
+            <span>${{escapeHtml(row.siglaPartido)}}/${{escapeHtml(row.siglaUf)}}</span>
           </div>
           <div class="mobile-card-grid">
-            <span>Gasto<b>${{formatMoney.format(Number(row.valor_liquido_total || 0))}}</b></span>
-            <span>Custo total<b>${{formatMoney.format(Number(row.custo_total_estimado || 0))}}</b></span>
+            <span>Gasto<b>${{formatCompactMoney(Number(row.valor_liquido_total || 0))}}</b></span>
+            <span>Custo total<b>${{formatCompactMoney(Number(row.custo_total_estimado || 0))}}</b></span>
             <span>Presença rel.<b>${{formatPct.format(Number(row.indice_presenca_relativa || 0))}}%</b></span>
             <span>PECs<b>${{formatNumber.format(Number(row.qtd_votacoes_pec || 0))}}</b></span>
             <span>Aus. não just.<b>${{formatPct.format(Number(row.pct_ausencia_nao_justificada || 0))}}%</b></span>
-            <span>YoY<b>${{formatMoney.format(Number(row.diferenca_yoy || 0))}}</b></span>
+            <span>YoY<b>${{formatCompactMoney(Number(row.diferenca_yoy || 0))}}</b></span>
           </div>
         </article>
       `).join('');
     }}
 
     function renderPecVotes(rows) {{
-      document.getElementById('pecVoteBody').innerHTML = rows.map(row => `
+      const sortedRows = sortRows(rows, pecSort);
+      const maxPage = Math.max(Math.ceil(sortedRows.length / pageSize), 1);
+      pecPage = Math.min(pecPage, maxPage);
+      const pageRows = getPageRows(sortedRows, pecPage);
+      document.getElementById('pecTableStatus').textContent = pageLabel(pecPage, sortedRows.length) + ' votos em PECs';
+      document.getElementById('pecPageStatus').textContent = `Página ${{formatNumber.format(pecPage)}} de ${{formatNumber.format(maxPage)}}`;
+      document.getElementById('pecPrevPage').disabled = pecPage <= 1;
+      document.getElementById('pecNextPage').disabled = pecPage >= maxPage;
+      lastPecRows = sortedRows;
+
+      document.getElementById('pecVoteBody').innerHTML = pageRows.map(row => `
         <tr>
-          <td>${{row.data_ultima || ''}}</td>
-          <td>${{row.nome || ''}}</td>
-          <td>${{row.siglaPartido || ''}}</td>
-          <td>${{row.siglaUf || ''}}</td>
+          <td>${{escapeHtml(row.data_ultima)}}</td>
+          <td>${{escapeHtml(row.nome)}}</td>
+          <td>${{escapeHtml(row.siglaPartido)}}</td>
+          <td>${{escapeHtml(row.siglaUf)}}</td>
           <td>
-            <div class="pec-title">${{row.proposicao_titulo || 'PEC'}}</div>
-            <div class="pec-desc">${{row.ementa_curta || ''}}</div>
+            <div class="pec-title">${{escapeHtml(row.proposicao_titulo || 'PEC')}}</div>
+            <div class="pec-desc">${{escapeHtml(row.ementa_curta)}}</div>
           </td>
-          <td><strong>${{row.voto_predominante || ''}}</strong></td>
+          <td><strong>${{escapeHtml(row.voto_predominante)}}</strong></td>
           <td class="num">${{formatNumber.format(Number(row.votos_sim || 0))}}</td>
           <td class="num">${{formatNumber.format(Number(row.votos_nao || 0))}}</td>
           <td class="num">${{formatNumber.format(Number(row.votos_obstrucao || 0) + Number(row.votos_outros || 0))}}</td>
-          <td>${{row.siglaOrgao || ''}}</td>
+          <td>${{escapeHtml(row.siglaOrgao)}}</td>
         </tr>
       `).join('');
 
-      document.getElementById('pecVoteCards').innerHTML = rows.map(row => `
+      document.getElementById('pecVoteCards').innerHTML = pageRows.map(row => `
         <article class="mobile-data-card">
           <div class="mobile-card-title">
-            <span>${{row.proposicao_titulo || 'PEC'}}</span>
-            <span>${{row.voto_predominante || ''}}</span>
+            <span>${{escapeHtml(row.proposicao_titulo || 'PEC')}}</span>
+            <span>${{escapeHtml(row.voto_predominante)}}</span>
           </div>
           <div class="mobile-card-meta">
-            <span>${{row.data_ultima || ''}}</span>
-            <span>${{row.nome || ''}}</span>
-            <span>${{row.siglaPartido || ''}}/${{row.siglaUf || ''}}</span>
+            <span>${{escapeHtml(row.data_ultima)}}</span>
+            <span>${{escapeHtml(row.nome)}}</span>
+            <span>${{escapeHtml(row.siglaPartido)}}/${{escapeHtml(row.siglaUf)}}</span>
           </div>
-          <div class="pec-desc">${{row.ementa_curta || ''}}</div>
+          <div class="pec-desc">${{escapeHtml(row.ementa_curta)}}</div>
           <div class="mobile-card-grid">
             <span>Sim<b>${{formatNumber.format(Number(row.votos_sim || 0))}}</b></span>
             <span>Não<b>${{formatNumber.format(Number(row.votos_nao || 0))}}</b></span>
             <span>Outros<b>${{formatNumber.format(Number(row.votos_obstrucao || 0) + Number(row.votos_outros || 0))}}</b></span>
-            <span>Órgão<b>${{row.siglaOrgao || ''}}</b></span>
+            <span>Órgão<b>${{escapeHtml(row.siglaOrgao)}}</b></span>
           </div>
         </article>
       `).join('');
     }}
 
+    function updateActiveFilters() {{
+      const chips = [
+        {{ label: stateFilter.value || 'Brasil', target: stateFilter, type: 'uf' }},
+        {{ label: partyFilter.value || 'Todos os partidos', target: partyFilter, type: 'partido' }},
+        {{ label: nameFilter.value.trim() || 'Todos os deputados', target: nameFilter, type: 'deputado' }},
+        {{ label: pecSelect.value || 'Todas as PECs', target: pecSelect, type: 'pec' }}
+      ];
+      document.getElementById('activeFilters').innerHTML = '<strong>Mostrando:</strong>' + chips.map(item => {{
+        const canRemove = item.target.value || item.target === nameFilter && nameFilter.value.trim();
+        const button = canRemove ? `<button type="button" data-clear-filter="${{item.type}}" aria-label="Remover filtro ${{escapeHtml(item.label)}}">x</button>` : '';
+        return `<span class="chip">${{escapeHtml(item.label)}}${{button}}</span>`;
+      }}).join('');
+    }}
+
+    function updateSortHeaders() {{
+      document.querySelectorAll('th[data-sort]').forEach(header => {{
+        const state = header.dataset.table === 'pec' ? pecSort : candidateSort;
+        header.classList.toggle('sorted-asc', header.dataset.sort === state.field && state.direction === 'asc');
+        header.classList.toggle('sorted-desc', header.dataset.sort === state.field && state.direction === 'desc');
+      }});
+    }}
+
+    function updateUrl() {{
+      const params = new URLSearchParams();
+      if (stateFilter.value) params.set('uf', stateFilter.value);
+      if (partyFilter.value) params.set('partido', partyFilter.value);
+      if (nameFilter.value.trim()) params.set('deputado', nameFilter.value.trim());
+      if (pecSelect.value) params.set('pec', pecSelect.value);
+      const query = params.toString();
+      const nextUrl = window.location.pathname + (query ? '?' + query : '') + window.location.hash;
+      window.history.replaceState(null, '', nextUrl);
+    }}
+
+    function applyUrlFilters() {{
+      const params = new URLSearchParams(window.location.search);
+      stateFilter.value = params.get('uf') || '';
+      partyFilter.value = params.get('partido') || '';
+      nameFilter.value = params.get('deputado') || '';
+      pecSelect.value = params.get('pec') || '';
+    }}
+
+    function resetPages() {{
+      candidatePage = 1;
+      pecPage = 1;
+    }}
+
+    function scheduleRender({{ reset = true, syncUrl = true }} = {{}}) {{
+      if (reset) resetPages();
+      setLoading(true);
+      window.requestAnimationFrame(() => {{
+        render();
+        updateSortHeaders();
+        if (syncUrl) updateUrl();
+        setLoading(false);
+      }});
+    }}
+
+    function csvValue(value) {{
+      return '"' + String(value ?? '').replace(/"/g, '""') + '"';
+    }}
+
+    function downloadCsv(filename, rows, columns) {{
+      const header = columns.map(column => csvValue(column.label)).join(',');
+      const body = rows.map(row => columns.map(column => csvValue(row[column.field])).join(',')).join('\\n');
+      const blob = new Blob([header + '\\n' + body], {{ type: 'text/csv;charset=utf-8;' }});
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    }}
+
     function render() {{
       const rows = filteredData();
+      updateActiveFilters();
       document.getElementById('kpiDeputies').textContent = formatNumber.format(rows.length);
       document.getElementById('kpiExpenses').textContent = formatCompactMoney(sum(rows, 'valor_liquido_total'));
       document.getElementById('kpiSalary').textContent = formatCompactMoney(sum(rows, 'valor_subsidio_bruto_total'));
@@ -1569,6 +1906,7 @@ def render_html(report_df: pd.DataFrame) -> str:
     setOptions(stateFilter, STATES, 'Todos');
     setOptions(partyFilter, PARTIES, 'Todos');
     setOptions(pecSelect, PEC_OPTIONS, 'Todas');
+    applyUrlFilters();
     renderStaticBars('categoryShareBars', CATEGORY_DATA, 'categoria_tratada', 'share_gasto_pct', '', value => formatPct.format(value) + '%');
     document.querySelector('[data-toggle-kpis]').addEventListener('click', event => {{
       document.body.classList.toggle('show-all-kpis');
@@ -1594,8 +1932,87 @@ def render_html(report_df: pd.DataFrame) -> str:
           : event.currentTarget.textContent.replace('Expandir', 'Recolher');
       }});
     }});
-    [stateFilter, partyFilter, nameFilter, sortFilter, pecFilter, pecSelect, partyMetricFilter].forEach(element => element.addEventListener('input', render));
+    [stateFilter, partyFilter, nameFilter, pecFilter, pecSelect, partyMetricFilter].forEach(element => {{
+      element.addEventListener('input', () => scheduleRender({{ reset: true }}));
+    }});
+    sortFilter.addEventListener('input', () => {{
+      candidateSort = {{ field: sortFilter.value, direction: 'desc' }};
+      scheduleRender({{ reset: true }});
+    }});
+    document.getElementById('activeFilters').addEventListener('click', event => {{
+      const type = event.target.dataset.clearFilter;
+      if (!type) return;
+      if (type === 'uf') stateFilter.value = '';
+      if (type === 'partido') partyFilter.value = '';
+      if (type === 'deputado') nameFilter.value = '';
+      if (type === 'pec') pecSelect.value = '';
+      scheduleRender({{ reset: true }});
+    }});
+    document.querySelectorAll('th[data-sort]').forEach(header => {{
+      header.addEventListener('click', () => {{
+        const state = header.dataset.table === 'pec' ? pecSort : candidateSort;
+        const nextDirection = state.field === header.dataset.sort && state.direction === 'desc' ? 'asc' : 'desc';
+        if (header.dataset.table === 'pec') {{
+          pecSort = {{ field: header.dataset.sort, direction: nextDirection }};
+          pecPage = 1;
+        }} else {{
+          candidateSort = {{ field: header.dataset.sort, direction: nextDirection }};
+          if (Array.from(sortFilter.options).some(option => option.value === header.dataset.sort)) {{
+            sortFilter.value = header.dataset.sort;
+          }}
+          candidatePage = 1;
+        }}
+        scheduleRender({{ reset: false, syncUrl: false }});
+      }});
+    }});
+    document.getElementById('candidatePrevPage').addEventListener('click', () => {{
+      candidatePage = Math.max(candidatePage - 1, 1);
+      scheduleRender({{ reset: false, syncUrl: false }});
+    }});
+    document.getElementById('candidateNextPage').addEventListener('click', () => {{
+      candidatePage += 1;
+      scheduleRender({{ reset: false, syncUrl: false }});
+    }});
+    document.getElementById('pecPrevPage').addEventListener('click', () => {{
+      pecPage = Math.max(pecPage - 1, 1);
+      scheduleRender({{ reset: false, syncUrl: false }});
+    }});
+    document.getElementById('pecNextPage').addEventListener('click', () => {{
+      pecPage += 1;
+      scheduleRender({{ reset: false, syncUrl: false }});
+    }});
+    document.getElementById('exportCandidateCsv').addEventListener('click', () => {{
+      downloadCsv('camara_deputados_filtrados.csv', lastCandidateRows, [
+        {{ field: 'nome', label: 'Deputado' }},
+        {{ field: 'siglaPartido', label: 'Partido' }},
+        {{ field: 'siglaUf', label: 'UF' }},
+        {{ field: 'valor_liquido_total', label: 'Gasto mandato' }},
+        {{ field: 'valor_subsidio_bruto_total', label: 'Remuneracao' }},
+        {{ field: 'custo_total_estimado', label: 'Custo total' }},
+        {{ field: 'indice_presenca_relativa', label: 'Presenca relativa pct' }},
+        {{ field: 'pct_ausencia_nao_justificada', label: 'Ausencia nao justificada pct' }},
+        {{ field: 'qtd_votacoes_pec', label: 'Votacoes PEC' }},
+        {{ field: 'diferenca_yoy', label: 'Diferenca YoY' }}
+      ]);
+    }});
+    document.getElementById('exportPecCsv').addEventListener('click', () => {{
+      downloadCsv('camara_votos_pec_filtrados.csv', lastPecRows, [
+        {{ field: 'data_ultima', label: 'Ultima votacao' }},
+        {{ field: 'nome', label: 'Deputado' }},
+        {{ field: 'siglaPartido', label: 'Partido' }},
+        {{ field: 'siglaUf', label: 'UF' }},
+        {{ field: 'proposicao_titulo', label: 'PEC' }},
+        {{ field: 'ementa_curta', label: 'Ementa' }},
+        {{ field: 'voto_predominante', label: 'Voto predominante' }},
+        {{ field: 'votos_sim', label: 'Sim' }},
+        {{ field: 'votos_nao', label: 'Nao' }},
+        {{ field: 'votos_obstrucao', label: 'Obstrucao' }},
+        {{ field: 'votos_outros', label: 'Outros' }},
+        {{ field: 'siglaOrgao', label: 'Orgao' }}
+      ]);
+    }});
     render();
+    updateSortHeaders();
   </script>
 </body>
 </html>
