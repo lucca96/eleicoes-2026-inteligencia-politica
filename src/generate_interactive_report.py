@@ -418,6 +418,22 @@ def render_html(report_df: pd.DataFrame) -> str:
       font-size: 13px;
       text-align: right;
     }}
+    .author-meta {{
+      display: grid;
+      gap: 4px;
+      justify-items: end;
+    }}
+    .author-meta strong {{
+      color: var(--gov-blue-dark);
+      font-size: 14px;
+    }}
+    .author-meta a {{
+      color: var(--gov-blue);
+      font-size: 13px;
+      font-weight: 680;
+      text-decoration: none;
+    }}
+    .author-meta a:hover {{ text-decoration: underline; }}
     .hero {{
       max-width: 1380px;
       margin: 0 auto;
@@ -689,6 +705,7 @@ def render_html(report_df: pd.DataFrame) -> str:
         gap: 8px;
       }}
       .brand-meta {{ text-align: left; }}
+      .author-meta {{ justify-items: start; }}
       .gov-logo {{ width: 96px; }}
       .hero, main {{
         padding-left: 14px;
@@ -726,7 +743,11 @@ def render_html(report_df: pd.DataFrame) -> str:
           src="https://www.gov.br/governodigital/pt-br/acessibilidade-e-usuario/atendimento-gov.br/imagens/gov-br_logo-svg.png/@@images/image"
           alt="gov.br"
         >
-        <div class="brand-meta">Portal único do Governo Federal</div>
+        <div class="author-meta">
+          <div class="brand-meta">Portal único do Governo Federal</div>
+          <strong>Feito por Lucca Lanzellotti, BI Expert</strong>
+          <a href="https://www.linkedin.com/in/lucca-lanzellotti" target="_blank" rel="noopener">linkedin.com/in/lucca-lanzellotti</a>
+        </div>
       </div>
       <div class="eyebrow">Painel de inteligência política</div>
       <h1>Relatório Interativo da Câmara</h1>
