@@ -51,24 +51,99 @@ def add_group_differences(report_df: pd.DataFrame, group_column: str, suffix: st
 
 
 def build_category_dataset() -> pd.DataFrame:
-    return read_csv_if_exists(RAW_CAMARA_DIR / "resumo_gastos_categoria_mandato.csv")
+    category_df = read_csv_if_exists(RAW_CAMARA_DIR / "resumo_gastos_categoria_mandato.csv")
+    if category_df.empty:
+        return category_df
+
+    def normalize_category(value: object) -> str:
+        text = str(value or "").upper()
+        if "DIVULGA" in text:
+            return "Divulgação parlamentar"
+        if "VEÍCULO" in text or "VEICULO" in text or "FRETAMENTO" in text:
+            return "Locação e transporte"
+        if "PASSAGEM AÉREA" in text or "PASSAGEM AEREA" in text:
+            return "Passagens aéreas"
+        if "PASSAGENS TERRESTRES" in text:
+            return "Passagens terrestres e fluviais"
+        if "ESCRITÓRIO" in text or "ESCRITORIO" in text:
+            return "Escritório de apoio"
+        if "COMBUST" in text:
+            return "Combustíveis"
+        if "HOSPEDAGEM" in text:
+            return "Hospedagem"
+        if "TELEFONIA" in text:
+            return "Telefonia"
+        if "SEGURANÇA" in text or "SEGURANCA" in text:
+            return "Segurança"
+        if "TÁXI" in text or "TAXI" in text or "PEDÁGIO" in text or "PEDAGIO" in text:
+            return "Táxi, pedágio e estacionamento"
+        if "ALIMENTAÇÃO" in text or "ALIMENTACAO" in text:
+            return "Alimentação"
+        if "PUBLICA" in text:
+            return "Publicações"
+        if "POSTAIS" in text:
+            return "Serviços postais"
+        if "CURSO" in text or "PALESTRA" in text or "EVENTO" in text:
+            return "Cursos e eventos"
+        if "TOKEN" in text or "CERTIFICADO" in text:
+            return "Certificados digitais"
+        return "Outros"
+
+    category_df["categoria_tratada"] = category_df["tipoDespesa"].map(normalize_category)
+    grouped_df = (
+        category_df.groupby("categoria_tratada", as_index=False)
+        .agg(
+            qtd_lancamentos=("qtd_lancamentos", "sum"),
+            valor_liquido_total=("valor_liquido_total", "sum"),
+        )
+        .sort_values("valor_liquido_total", ascending=False)
+    )
+    total_value = grouped_df["valor_liquido_total"].sum()
+    grouped_df["share_gasto_pct"] = grouped_df.apply(
+        lambda row: row["valor_liquido_total"] / total_value * 100
+        if total_value > 0
+        else 0,
+        axis=1,
+    )
+    return grouped_df
 
 
 def build_party_dataset(report_df: pd.DataFrame) -> pd.DataFrame:
-    return (
+    party_df = (
         report_df.groupby("siglaPartido", as_index=False)
         .agg(
             qtd_candidatos=("idDeputado", "nunique"),
             gasto_total=("valor_liquido_total", "sum"),
+            remuneracao_total=("valor_subsidio_bruto_total", "sum"),
             custo_total=("custo_total_estimado", "sum"),
             presenca_media=("indice_presenca_relativa", "mean"),
+            ausencia_nao_just_media=("pct_ausencia_nao_justificada", "mean"),
+            votacoes_pec=("qtd_votacoes_pec", "sum"),
         )
         .assign(
             gasto_medio_por_candidato=lambda df: df["gasto_total"]
             / df["qtd_candidatos"].replace(0, 1)
         )
-        .sort_values("gasto_medio_por_candidato", ascending=False)
     )
+    total_deputies = party_df["qtd_candidatos"].sum()
+    total_cost = party_df["custo_total"].sum()
+    party_df["share_deputados_pct"] = party_df.apply(
+        lambda row: row["qtd_candidatos"] / total_deputies * 100
+        if total_deputies > 0
+        else 0,
+        axis=1,
+    )
+    party_df["share_custo_pct"] = party_df.apply(
+        lambda row: row["custo_total"] / total_cost * 100 if total_cost > 0 else 0,
+        axis=1,
+    )
+    party_df["custo_por_deputado"] = (
+        party_df["custo_total"] / party_df["qtd_candidatos"].replace(0, 1)
+    )
+    party_df["pecs_por_deputado"] = (
+        party_df["votacoes_pec"] / party_df["qtd_candidatos"].replace(0, 1)
+    )
+    return party_df.sort_values("custo_por_deputado", ascending=False)
 
 
 def build_pec_vote_detail_dataset() -> pd.DataFrame:
@@ -337,7 +412,13 @@ def render_html(report_df: pd.DataFrame) -> str:
     categories_df = build_category_dataset()
     category_records = categories_df.to_dict(orient="records") if not categories_df.empty else []
     party_records = build_party_dataset(report_df).to_dict(orient="records")
-    pec_vote_records = build_pec_vote_detail_dataset().to_dict(orient="records")
+    pec_vote_df = build_pec_vote_detail_dataset()
+    pec_vote_records = pec_vote_df.to_dict(orient="records")
+    pec_options = (
+        sorted(pec_vote_df["proposicao_titulo"].dropna().unique().tolist())
+        if not pec_vote_df.empty
+        else []
+    )
     states = sorted(report_df["siglaUf"].dropna().unique().tolist())
     parties = sorted(report_df["siglaPartido"].dropna().unique().tolist())
 
@@ -345,6 +426,7 @@ def render_html(report_df: pd.DataFrame) -> str:
     categories_json = json.dumps(category_records, ensure_ascii=False)
     party_json = json.dumps(party_records, ensure_ascii=False)
     pec_vote_json = json.dumps(pec_vote_records, ensure_ascii=False)
+    pec_options_json = json.dumps(pec_options, ensure_ascii=False)
     states_json = json.dumps(states, ensure_ascii=False)
     parties_json = json.dumps(parties, ensure_ascii=False)
 
@@ -638,6 +720,13 @@ def render_html(report_df: pd.DataFrame) -> str:
       font-size: 15px;
       font-weight: 760;
     }}
+    .chart-tools {{
+      display: grid;
+      grid-template-columns: minmax(180px, 280px) 1fr;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 12px;
+    }}
     .bar-row {{
       display: grid;
       grid-template-columns: minmax(74px, 150px) 1fr minmax(90px, 128px);
@@ -669,6 +758,48 @@ def render_html(report_df: pd.DataFrame) -> str:
     }}
     .bar-fill.party {{ background: var(--gov-blue); }}
     .bar-fill.presence {{ background: var(--gov-yellow); }}
+    .stack-row {{
+      display: grid;
+      gap: 6px;
+      padding: 7px 0;
+      font-size: 13px;
+    }}
+    .stack-head {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--gov-blue-dark);
+      font-weight: 720;
+    }}
+    .stack-track {{
+      display: flex;
+      height: 13px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #edf2f7;
+    }}
+    .stack-segment-expense {{ background: var(--gov-green); }}
+    .stack-segment-salary {{ background: var(--gov-blue); }}
+    .legend {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }}
+    .legend span {{
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }}
+    .legend i {{
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      display: inline-block;
+    }}
     .table-wrap {{
       width: 100%;
       max-width: 100%;
@@ -716,6 +847,15 @@ def render_html(report_df: pd.DataFrame) -> str:
       font-weight: 760;
       padding: 8px 14px;
       cursor: pointer;
+    }}
+    .detail-toggle {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      justify-self: start;
+    }}
+    .detail-body.is-collapsed {{
+      display: none;
     }}
     .mobile-card-list {{
       display: none;
@@ -854,6 +994,7 @@ def render_html(report_df: pd.DataFrame) -> str:
       .mobile-collapsible .bar-row:nth-child(n+6) {{ display: none; }}
       .mobile-collapsible.is-expanded .bar-row {{ display: grid; }}
       .pec-tools {{ grid-template-columns: 1fr; }}
+      .chart-tools {{ grid-template-columns: 1fr; }}
       .block-heading {{
         align-items: flex-start;
         flex-direction: column;
@@ -954,7 +1095,17 @@ def render_html(report_df: pd.DataFrame) -> str:
       <button class="mobile-toggle" type="button" data-toggle-section="gastosGrid">Mostrar todos os gráficos de gastos</button>
       <div class="grid mobile-collapsible" id="gastosGrid">
       <div class="card">
-        <h2 class="section-title">Custo total por partido</h2>
+        <h2 class="section-title">Partidos por métrica</h2>
+        <div class="chart-tools">
+          <label>Métrica<select id="partyMetricFilter">
+            <option value="custo_total">Custo total</option>
+            <option value="custo_por_deputado">Custo por deputado</option>
+            <option value="share_custo_pct">Share % do custo</option>
+            <option value="qtd_candidatos">Quantidade de deputados</option>
+            <option value="share_deputados_pct">Share % da bancada</option>
+            <option value="pecs_por_deputado">PECs por deputado</option>
+          </select></label>
+        </div>
         <div id="partyBars"></div>
       </div>
       <div class="card">
@@ -968,6 +1119,15 @@ def render_html(report_df: pd.DataFrame) -> str:
       <div class="card">
         <h2 class="section-title">Gasto médio por candidato do partido</h2>
         <div id="partyAverageBars"></div>
+      </div>
+      <div class="card">
+        <h2 class="section-title">Custo: cota parlamentar x remuneração</h2>
+        <div class="legend"><span><i style="background: var(--gov-green)"></i>Cota</span><span><i style="background: var(--gov-blue)"></i>Remuneração</span></div>
+        <div id="partyCostStack"></div>
+      </div>
+      <div class="card">
+        <h2 class="section-title">Representatividade: bancada x custo</h2>
+        <div id="partyShareCompare"></div>
       </div>
       </div>
     </section>
@@ -1007,9 +1167,12 @@ def render_html(report_df: pd.DataFrame) -> str:
       <div class="card full-span">
         <h2 class="section-title">Votos por PEC</h2>
         <div class="pec-tools">
+          <label>Selecionar PEC<select id="pecSelect"></select></label>
           <label>Buscar PEC<input id="pecFilter" type="search" placeholder="PEC, deputado, voto ou trecho da ementa"></label>
           <div class="pec-note">A tabela abaixo acompanha os filtros de estado, partido e deputado aplicados no topo.</div>
         </div>
+        <button class="mobile-toggle detail-toggle" type="button" data-toggle-detail="pecDetailBody">Expandir detalhes das PECs</button>
+        <div class="detail-body is-collapsed" id="pecDetailBody">
         <div class="table-wrap desktop-table">
           <table class="pec-table">
             <thead>
@@ -1030,6 +1193,7 @@ def render_html(report_df: pd.DataFrame) -> str:
           </table>
         </div>
         <div class="mobile-card-list" id="pecVoteCards"></div>
+        </div>
       </div>
       </div>
     </section>
@@ -1039,6 +1203,8 @@ def render_html(report_df: pd.DataFrame) -> str:
         <h2>Detalhamento por deputado</h2>
         <span>Até 120 registros conforme os filtros atuais</span>
       </div>
+      <button class="mobile-toggle detail-toggle" type="button" data-toggle-detail="candidateDetailBody">Expandir detalhes por deputado</button>
+      <div class="detail-body is-collapsed" id="candidateDetailBody">
       <div class="table-wrap desktop-table">
         <table>
         <thead>
@@ -1062,6 +1228,7 @@ def render_html(report_df: pd.DataFrame) -> str:
       </table>
       </div>
       <div class="mobile-card-list" id="deputyCardList"></div>
+      </div>
     </section>
   </main>
   <script>
@@ -1069,6 +1236,7 @@ def render_html(report_df: pd.DataFrame) -> str:
     const CATEGORY_DATA = {categories_json};
     const PARTY_DATA = {party_json};
     const PEC_VOTE_DATA = {pec_vote_json};
+    const PEC_OPTIONS = {pec_options_json};
     const STATES = {states_json};
     const PARTIES = {parties_json};
 
@@ -1081,10 +1249,21 @@ def render_html(report_df: pd.DataFrame) -> str:
     const nameFilter = document.getElementById('nameFilter');
     const sortFilter = document.getElementById('sortFilter');
     const pecFilter = document.getElementById('pecFilter');
+    const pecSelect = document.getElementById('pecSelect');
+    const partyMetricFilter = document.getElementById('partyMetricFilter');
 
     function setOptions(select, values, allLabel) {{
       select.innerHTML = '<option value="">' + allLabel + '</option>' +
         values.map(value => '<option value="' + value + '">' + value + '</option>').join('');
+    }}
+
+    function formatCompactMoney(value) {{
+      const number = Number(value || 0);
+      const abs = Math.abs(number);
+      if (abs >= 1_000_000_000) return 'R$ ' + formatNumber.format(Math.round(number / 1_000_000_000)) + ' bi';
+      if (abs >= 1_000_000) return 'R$ ' + formatNumber.format(Math.round(number / 1_000_000)) + ' mi';
+      if (abs >= 1_000) return 'R$ ' + formatNumber.format(Math.round(number / 1_000)) + ' mil';
+      return formatMoney.format(number);
     }}
 
     function filteredData() {{
@@ -1104,6 +1283,7 @@ def render_html(report_df: pd.DataFrame) -> str:
       const party = partyFilter.value;
       const name = nameFilter.value.trim().toLowerCase();
       const term = pecFilter.value.trim().toLowerCase();
+      const selectedPec = pecSelect.value;
 
       const limit = window.matchMedia('(max-width: 720px)').matches ? 80 : 300;
       return PEC_VOTE_DATA.filter(row => {{
@@ -1118,6 +1298,7 @@ def render_html(report_df: pd.DataFrame) -> str:
 
         return (!state || row.siglaUf === state) &&
           (!party || row.siglaPartido === party) &&
+          (!selectedPec || row.proposicao_titulo === selectedPec) &&
           (!name || String(row.nome || '').toLowerCase().includes(name)) &&
           (!term || haystack.includes(term));
       }}).slice(0, limit);
@@ -1153,6 +1334,60 @@ def render_html(report_df: pd.DataFrame) -> str:
         .slice(0, 12);
     }}
 
+    function buildPartyRows(rows) {{
+      const result = new Map();
+      rows.forEach(row => {{
+        const label = row.siglaPartido || 'ND';
+        const item = result.get(label) || {{
+          siglaPartido: label,
+          qtd_candidatos: 0,
+          gasto_total: 0,
+          remuneracao_total: 0,
+          custo_total: 0,
+          votacoes_pec: 0,
+          ids: new Set()
+        }};
+        item.ids.add(row.idDeputado);
+        item.gasto_total += Number(row.valor_liquido_total || 0);
+        item.remuneracao_total += Number(row.valor_subsidio_bruto_total || 0);
+        item.custo_total += Number(row.custo_total_estimado || 0);
+        item.votacoes_pec += Number(row.qtd_votacoes_pec || 0);
+        result.set(label, item);
+      }});
+
+      const partyRows = Array.from(result.values()).map(item => {{
+        item.qtd_candidatos = item.ids.size;
+        item.gasto_medio_por_candidato = item.gasto_total / Math.max(item.qtd_candidatos, 1);
+        item.custo_por_deputado = item.custo_total / Math.max(item.qtd_candidatos, 1);
+        item.pecs_por_deputado = item.votacoes_pec / Math.max(item.qtd_candidatos, 1);
+        delete item.ids;
+        return item;
+      }});
+
+      const totalDeputies = partyRows.reduce((acc, row) => acc + row.qtd_candidatos, 0);
+      const totalCost = partyRows.reduce((acc, row) => acc + row.custo_total, 0);
+      partyRows.forEach(row => {{
+        row.share_deputados_pct = totalDeputies ? row.qtd_candidatos / totalDeputies * 100 : 0;
+        row.share_custo_pct = totalCost ? row.custo_total / totalCost * 100 : 0;
+      }});
+      return partyRows;
+    }}
+
+    function metricFormatter(metric) {{
+      if (['custo_total', 'custo_por_deputado', 'gasto_medio_por_candidato'].includes(metric)) return formatCompactMoney;
+      if (['share_custo_pct', 'share_deputados_pct'].includes(metric)) return value => formatPct.format(value) + '%';
+      return value => formatNumber.format(Math.round(value));
+    }}
+
+    function renderPartyMetricBars(rows) {{
+      const metric = partyMetricFilter.value;
+      const partyRows = buildPartyRows(rows)
+        .sort((a, b) => Number(b[metric] || 0) - Number(a[metric] || 0))
+        .slice(0, 12)
+        .map(row => [row.siglaPartido, Number(row[metric] || 0)]);
+      renderBars('partyBars', partyRows, 'party', metricFormatter(metric));
+    }}
+
     function renderBars(targetId, rows, className, formatter) {{
       const target = document.getElementById(targetId);
       const max = Math.max(...rows.map(row => row[1]), 1);
@@ -1179,6 +1414,43 @@ def render_html(report_df: pd.DataFrame) -> str:
           </div>
         `;
       }}).join('');
+    }}
+
+    function renderStackedPartyCosts(rows) {{
+      const partyRows = buildPartyRows(rows)
+        .sort((a, b) => b.custo_total - a.custo_total)
+        .slice(0, 10);
+      document.getElementById('partyCostStack').innerHTML = partyRows.map(row => {{
+        const total = Math.max(row.custo_total, 1);
+        const expensePct = row.gasto_total / total * 100;
+        const salaryPct = row.remuneracao_total / total * 100;
+        return `
+          <div class="stack-row">
+            <div class="stack-head"><span>${{row.siglaPartido}}</span><span>${{formatCompactMoney(row.custo_total)}}</span></div>
+            <div class="stack-track">
+              <div class="stack-segment-expense" style="width:${{expensePct}}%"></div>
+              <div class="stack-segment-salary" style="width:${{salaryPct}}%"></div>
+            </div>
+          </div>
+        `;
+      }}).join('');
+    }}
+
+    function renderPartyShareCompare(rows) {{
+      const partyRows = buildPartyRows(rows)
+        .sort((a, b) => b.share_custo_pct - a.share_custo_pct)
+        .slice(0, 10);
+      document.getElementById('partyShareCompare').innerHTML = partyRows.map(row => `
+        <div class="stack-row">
+          <div class="stack-head"><span>${{row.siglaPartido}}</span><span>${{formatPct.format(row.share_custo_pct)}}% custo | ${{formatPct.format(row.share_deputados_pct)}}% bancada</span></div>
+          <div class="stack-track">
+            <div class="stack-segment-expense" style="width:${{Math.max(row.share_custo_pct, 2)}}%"></div>
+          </div>
+          <div class="stack-track">
+            <div class="stack-segment-salary" style="width:${{Math.max(row.share_deputados_pct, 2)}}%"></div>
+          </div>
+        </div>
+      `).join('');
     }}
 
     function classForDelta(value) {{
@@ -1266,27 +1538,38 @@ def render_html(report_df: pd.DataFrame) -> str:
     function render() {{
       const rows = filteredData();
       document.getElementById('kpiDeputies').textContent = formatNumber.format(rows.length);
-      document.getElementById('kpiExpenses').textContent = formatMoney.format(sum(rows, 'valor_liquido_total'));
-      document.getElementById('kpiSalary').textContent = formatMoney.format(sum(rows, 'valor_subsidio_bruto_total'));
-      document.getElementById('kpiCost').textContent = formatMoney.format(sum(rows, 'custo_total_estimado'));
+      document.getElementById('kpiExpenses').textContent = formatCompactMoney(sum(rows, 'valor_liquido_total'));
+      document.getElementById('kpiSalary').textContent = formatCompactMoney(sum(rows, 'valor_subsidio_bruto_total'));
+      document.getElementById('kpiCost').textContent = formatCompactMoney(sum(rows, 'custo_total_estimado'));
       document.getElementById('kpiPresencePct').textContent = formatPct.format(avg(rows, 'indice_presenca_relativa')) + '%';
-      document.getElementById('kpiYoy').textContent = formatMoney.format(sum(rows, 'diferenca_yoy'));
+      document.getElementById('kpiYoy').textContent = formatCompactMoney(sum(rows, 'diferenca_yoy'));
       document.getElementById('kpiUnjustifiedAbsence').textContent = formatPct.format(avg(rows, 'pct_ausencia_nao_justificada')) + '%';
       document.getElementById('kpiPecVotes').textContent = formatNumber.format(sum(rows, 'qtd_votacoes_pec'));
-      renderBars('partyBars', groupedSum(rows, 'siglaPartido', 'custo_total_estimado'), 'party', value => formatMoney.format(value));
-      renderBars('stateBars', groupedSum(rows, 'siglaUf', 'custo_total_estimado'), '', value => formatMoney.format(value));
+      renderPartyMetricBars(rows);
+      renderBars('stateBars', groupedSum(rows, 'siglaUf', 'custo_total_estimado'), '', value => formatCompactMoney(value));
       renderBars('partyPresenceBars', groupedAvg(rows, 'siglaPartido', 'indice_presenca_relativa'), 'presence', value => formatPct.format(value) + '%');
       renderBars('statePresenceBars', groupedAvg(rows, 'siglaUf', 'indice_presenca_relativa'), 'presence', value => formatPct.format(value) + '%');
       renderBars('partyAbsenceBars', groupedAvg(rows, 'siglaPartido', 'pct_ausencia_nao_justificada'), 'presence', value => formatPct.format(value) + '%');
       renderBars('partyPecBars', groupedSum(rows, 'siglaPartido', 'qtd_votacoes_pec'), 'party', value => formatNumber.format(value));
+      renderBars(
+        'partyAverageBars',
+        buildPartyRows(rows)
+          .sort((a, b) => b.gasto_medio_por_candidato - a.gasto_medio_por_candidato)
+          .slice(0, 12)
+          .map(row => [row.siglaPartido, row.gasto_medio_por_candidato]),
+        'party',
+        value => formatCompactMoney(value)
+      );
+      renderStackedPartyCosts(rows);
+      renderPartyShareCompare(rows);
       renderTable(rows);
       renderPecVotes(filteredPecVotes());
     }}
 
     setOptions(stateFilter, STATES, 'Todos');
     setOptions(partyFilter, PARTIES, 'Todos');
-    renderStaticBars('categoryShareBars', CATEGORY_DATA, 'tipoDespesa', 'share_gasto_pct', '', value => formatPct.format(value) + '%');
-    renderStaticBars('partyAverageBars', PARTY_DATA, 'siglaPartido', 'gasto_medio_por_candidato', 'party', value => formatMoney.format(value));
+    setOptions(pecSelect, PEC_OPTIONS, 'Todas');
+    renderStaticBars('categoryShareBars', CATEGORY_DATA, 'categoria_tratada', 'share_gasto_pct', '', value => formatPct.format(value) + '%');
     document.querySelector('[data-toggle-kpis]').addEventListener('click', event => {{
       document.body.classList.toggle('show-all-kpis');
       event.currentTarget.textContent = document.body.classList.contains('show-all-kpis')
@@ -1302,7 +1585,16 @@ def render_html(report_df: pd.DataFrame) -> str:
           : 'Mostrar todos os gráficos';
       }});
     }});
-    [stateFilter, partyFilter, nameFilter, sortFilter, pecFilter].forEach(element => element.addEventListener('input', render));
+    document.querySelectorAll('[data-toggle-detail]').forEach(button => {{
+      button.addEventListener('click', event => {{
+        const target = document.getElementById(event.currentTarget.dataset.toggleDetail);
+        target.classList.toggle('is-collapsed');
+        event.currentTarget.textContent = target.classList.contains('is-collapsed')
+          ? event.currentTarget.textContent.replace('Recolher', 'Expandir')
+          : event.currentTarget.textContent.replace('Expandir', 'Recolher');
+      }});
+    }});
+    [stateFilter, partyFilter, nameFilter, sortFilter, pecFilter, pecSelect, partyMetricFilter].forEach(element => element.addEventListener('input', render));
     render();
   </script>
 </body>
