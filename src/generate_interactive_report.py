@@ -373,12 +373,20 @@ def render_html(report_df: pd.DataFrame) -> str:
       --shadow: 0 8px 20px rgba(7, 29, 65, 0.08);
     }}
     * {{ box-sizing: border-box; }}
-    html {{ scroll-behavior: smooth; }}
+    html {{
+      width: 100%;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }}
     body {{
+      width: 100%;
+      min-width: 0;
       margin: 0;
       background: var(--bg);
       color: var(--ink);
       font-family: Rawline, Raleway, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x: hidden;
     }}
     .govbar {{
       min-height: 44px;
@@ -449,6 +457,7 @@ def render_html(report_df: pd.DataFrame) -> str:
       color: #0a66c2;
     }}
     .hero {{
+      width: 100%;
       max-width: 1380px;
       margin: 0 auto;
       padding: 24px 28px 18px;
@@ -494,6 +503,7 @@ def render_html(report_df: pd.DataFrame) -> str:
       text-decoration: none;
     }}
     main {{
+      width: 100%;
       max-width: 1380px;
       margin: 0 auto;
       padding: 18px 28px 34px;
@@ -557,6 +567,7 @@ def render_html(report_df: pd.DataFrame) -> str:
       gap: 12px;
     }}
     .card {{
+      min-width: 0;
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: var(--radius);
@@ -645,6 +656,8 @@ def render_html(report_df: pd.DataFrame) -> str:
     .bar-fill.party {{ background: var(--gov-blue); }}
     .bar-fill.presence {{ background: var(--gov-yellow); }}
     .table-wrap {{
+      width: 100%;
+      max-width: 100%;
       overflow-x: auto;
       border: 1px solid var(--line);
       border-radius: var(--radius);
@@ -689,6 +702,50 @@ def render_html(report_df: pd.DataFrame) -> str:
       font-weight: 760;
       padding: 8px 14px;
       cursor: pointer;
+    }}
+    .mobile-card-list {{
+      display: none;
+    }}
+    .mobile-data-card {{
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 13px;
+    }}
+    .mobile-data-card strong {{
+      color: var(--gov-blue-dark);
+    }}
+    .mobile-card-title {{
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--gov-blue-dark);
+      font-weight: 760;
+    }}
+    .mobile-card-meta {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }}
+    .mobile-card-grid {{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 12px;
+    }}
+    .mobile-card-grid span {{
+      display: grid;
+      gap: 2px;
+      color: var(--muted);
+    }}
+    .mobile-card-grid b {{
+      color: var(--ink);
+      font-size: 13px;
     }}
     table {{
       width: 100%;
@@ -735,6 +792,8 @@ def render_html(report_df: pd.DataFrame) -> str:
       .author-meta {{ justify-content: flex-start; }}
       .gov-logo {{ width: 96px; }}
       .hero, main {{
+        width: 100%;
+        max-width: none;
         padding-left: 14px;
         padding-right: 14px;
       }}
@@ -761,6 +820,8 @@ def render_html(report_df: pd.DataFrame) -> str:
       .mobile-toggle {{ display: inline-flex; align-items: center; justify-content: center; }}
       .mobile-collapsible .card:nth-child(n+3) {{ display: none; }}
       .mobile-collapsible.is-expanded .card {{ display: block; }}
+      .mobile-collapsible .bar-row:nth-child(n+6) {{ display: none; }}
+      .mobile-collapsible.is-expanded .bar-row {{ display: grid; }}
       .pec-tools {{ grid-template-columns: 1fr; }}
       .block-heading {{
         align-items: flex-start;
@@ -774,6 +835,11 @@ def render_html(report_df: pd.DataFrame) -> str:
       }}
       .bar-row span {{ text-align: left; }}
       .pec-table .pec-desc {{ max-width: 320px; }}
+      .desktop-table {{ display: none; }}
+      .mobile-card-list {{
+        display: grid;
+        gap: 10px;
+      }}
       th, td {{ padding: 9px; }}
     }}
   </style>
@@ -917,7 +983,7 @@ def render_html(report_df: pd.DataFrame) -> str:
           <label>Buscar PEC<input id="pecFilter" type="search" placeholder="PEC, deputado, voto ou trecho da ementa"></label>
           <div class="pec-note">A tabela abaixo acompanha os filtros de estado, partido e deputado aplicados no topo.</div>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap desktop-table">
           <table class="pec-table">
             <thead>
               <tr>
@@ -936,6 +1002,7 @@ def render_html(report_df: pd.DataFrame) -> str:
             <tbody id="pecVoteBody"></tbody>
           </table>
         </div>
+        <div class="mobile-card-list" id="pecVoteCards"></div>
       </div>
       </div>
     </section>
@@ -945,7 +1012,7 @@ def render_html(report_df: pd.DataFrame) -> str:
         <h2>Detalhamento por deputado</h2>
         <span>Até 120 registros conforme os filtros atuais</span>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap desktop-table">
         <table>
         <thead>
           <tr>
@@ -967,6 +1034,7 @@ def render_html(report_df: pd.DataFrame) -> str:
         <tbody id="tableBody"></tbody>
       </table>
       </div>
+      <div class="mobile-card-list" id="deputyCardList"></div>
     </section>
   </main>
   <script>
@@ -1108,6 +1176,23 @@ def render_html(report_df: pd.DataFrame) -> str:
           <td class="num">${{formatMoney.format(Number(row.custo_por_presenca || 0))}}</td>
         </tr>
       `).join('');
+
+      document.getElementById('deputyCardList').innerHTML = rows.slice(0, 40).map(row => `
+        <article class="mobile-data-card">
+          <div class="mobile-card-title">
+            <span>${{row.nome || ''}}</span>
+            <span>${{row.siglaPartido || ''}}/${{row.siglaUf || ''}}</span>
+          </div>
+          <div class="mobile-card-grid">
+            <span>Gasto<b>${{formatMoney.format(Number(row.valor_liquido_total || 0))}}</b></span>
+            <span>Custo total<b>${{formatMoney.format(Number(row.custo_total_estimado || 0))}}</b></span>
+            <span>Presença rel.<b>${{formatPct.format(Number(row.indice_presenca_relativa || 0))}}%</b></span>
+            <span>PECs<b>${{formatNumber.format(Number(row.qtd_votacoes_pec || 0))}}</b></span>
+            <span>Aus. não just.<b>${{formatPct.format(Number(row.pct_ausencia_nao_justificada || 0))}}%</b></span>
+            <span>YoY<b>${{formatMoney.format(Number(row.diferenca_yoy || 0))}}</b></span>
+          </div>
+        </article>
+      `).join('');
     }}
 
     function renderPecVotes(rows) {{
@@ -1127,6 +1212,27 @@ def render_html(report_df: pd.DataFrame) -> str:
           <td class="num">${{formatNumber.format(Number(row.votos_obstrucao || 0) + Number(row.votos_outros || 0))}}</td>
           <td>${{row.siglaOrgao || ''}}</td>
         </tr>
+      `).join('');
+
+      document.getElementById('pecVoteCards').innerHTML = rows.map(row => `
+        <article class="mobile-data-card">
+          <div class="mobile-card-title">
+            <span>${{row.proposicao_titulo || 'PEC'}}</span>
+            <span>${{row.voto_predominante || ''}}</span>
+          </div>
+          <div class="mobile-card-meta">
+            <span>${{row.data_ultima || ''}}</span>
+            <span>${{row.nome || ''}}</span>
+            <span>${{row.siglaPartido || ''}}/${{row.siglaUf || ''}}</span>
+          </div>
+          <div class="pec-desc">${{row.ementa_curta || ''}}</div>
+          <div class="mobile-card-grid">
+            <span>Sim<b>${{formatNumber.format(Number(row.votos_sim || 0))}}</b></span>
+            <span>Não<b>${{formatNumber.format(Number(row.votos_nao || 0))}}</b></span>
+            <span>Outros<b>${{formatNumber.format(Number(row.votos_obstrucao || 0) + Number(row.votos_outros || 0))}}</b></span>
+            <span>Órgão<b>${{row.siglaOrgao || ''}}</b></span>
+          </div>
+        </article>
       `).join('');
     }}
 
