@@ -502,6 +502,19 @@ def render_html(report_df: pd.DataFrame) -> str:
       font-weight: 680;
       text-decoration: none;
     }}
+    .sticky-controls {{
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(247, 249, 251, 0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 0 12px;
+    }}
+    .sticky-controls .section-tabs {{
+      margin-top: 0;
+      margin-bottom: 10px;
+    }}
     main {{
       width: 100%;
       max-width: 1380px;
@@ -542,6 +555,7 @@ def render_html(report_df: pd.DataFrame) -> str:
       box-shadow: var(--shadow);
       padding: 14px;
     }}
+    .hero .section-tabs {{ display: none; }}
     label {{
       display: grid;
       gap: 6px;
@@ -805,6 +819,23 @@ def render_html(report_df: pd.DataFrame) -> str:
         padding-bottom: 4px;
       }}
       .section-tabs a {{ flex: 0 0 auto; }}
+      .sticky-controls {{
+        top: 0;
+        padding: 8px 0 10px;
+      }}
+      .sticky-controls .section-tabs {{ margin-bottom: 8px; }}
+      .sticky-controls .filters {{
+        gap: 8px;
+        padding: 10px;
+      }}
+      .sticky-controls label {{
+        font-size: 11px;
+      }}
+      .sticky-controls select,
+      .sticky-controls input {{
+        min-height: 38px;
+        font-size: 13px;
+      }}
       .filters, .grid {{ grid-template-columns: 1fr; }}
       .kpis {{
         grid-template-columns: 1fr 1fr;
@@ -870,6 +901,10 @@ def render_html(report_df: pd.DataFrame) -> str:
       <div class="eyebrow">Painel de inteligência política</div>
       <h1>Relatório Interativo da Câmara</h1>
       <div class="subtitle">Gastos do mandato, remuneração acumulada, presença em eventos e plenário, ausências, votos em PECs e comparativos YoY.</div>
+    </div>
+  </header>
+  <main>
+    <section class="section-block sticky-controls" id="visao-geral">
       <nav class="section-tabs" aria-label="Seções do relatório">
         <a href="#visao-geral">Visão geral</a>
         <a href="#gastos">Gastos</a>
@@ -877,14 +912,6 @@ def render_html(report_df: pd.DataFrame) -> str:
         <a href="#pecs">PECs</a>
         <a href="#detalhes">Detalhes</a>
       </nav>
-    </div>
-  </header>
-  <main>
-    <section class="section-block" id="visao-geral">
-      <div class="block-heading">
-        <h2>Visão geral</h2>
-        <span>Filtros e indicadores consolidados</span>
-      </div>
       <div class="filters">
         <label>Estado<select id="stateFilter"></select></label>
         <label>Partido<select id="partyFilter"></select></label>
