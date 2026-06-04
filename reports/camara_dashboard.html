@@ -69,21 +69,35 @@
       text-align: right;
     }
     .author-meta {
-      display: grid;
-      gap: 4px;
-      justify-items: end;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
     }
     .author-meta strong {
       color: var(--gov-blue-dark);
-      font-size: 14px;
+      font-size: 12px;
+      font-weight: 720;
     }
     .author-meta a {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       color: var(--gov-blue);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 680;
       text-decoration: none;
     }
     .author-meta a:hover { text-decoration: underline; }
+    .linkedin-icon {
+      width: 15px;
+      height: 15px;
+      display: inline-block;
+      color: #0a66c2;
+    }
     .hero {
       max-width: 1380px;
       margin: 0 auto;
@@ -313,6 +327,19 @@
       color: var(--muted);
       max-width: 560px;
     }
+    .mobile-toggle {
+      display: none;
+      min-height: 38px;
+      border: 1px solid #b8c8df;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--gov-blue);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 760;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
     table {
       width: 100%;
       min-width: 1120px;
@@ -355,7 +382,7 @@
         gap: 8px;
       }
       .brand-meta { text-align: left; }
-      .author-meta { justify-items: start; }
+      .author-meta { justify-content: flex-start; }
       .gov-logo { width: 96px; }
       .hero, main {
         padding-left: 14px;
@@ -363,7 +390,27 @@
       }
       h1 { font-size: 24px; }
       .subtitle { font-size: 14px; }
-      .filters, .kpis, .insight-row, .grid { grid-template-columns: 1fr; }
+      .section-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+      .section-tabs a { flex: 0 0 auto; }
+      .filters, .grid { grid-template-columns: 1fr; }
+      .kpis {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .kpis .card {
+        min-height: 78px;
+        padding: 12px;
+      }
+      .kpis .card:nth-child(n+5) { display: none; }
+      body.show-all-kpis .kpis .card { display: block; }
+      .insight-row { display: none; }
+      .mobile-toggle { display: inline-flex; align-items: center; justify-content: center; }
+      .mobile-collapsible .card:nth-child(n+3) { display: none; }
+      .mobile-collapsible.is-expanded .card { display: block; }
       .pec-tools { grid-template-columns: 1fr; }
       .block-heading {
         align-items: flex-start;
@@ -376,6 +423,7 @@
         padding: 8px 0;
       }
       .bar-row span { text-align: left; }
+      .pec-table .pec-desc { max-width: 320px; }
       th, td { padding: 9px; }
     }
   </style>
@@ -394,9 +442,13 @@
           alt="gov.br"
         >
         <div class="author-meta">
-          <div class="brand-meta">Portal único do Governo Federal</div>
-          <strong>Feito por Lucca Lanzellotti, BI Expert</strong>
-          <a href="https://www.linkedin.com/in/lucca-lanzellotti" target="_blank" rel="noopener">linkedin.com/in/lucca-lanzellotti</a>
+          <strong>Por Lucca Lanzellotti, BI Expert</strong>
+          <a href="https://www.linkedin.com/in/lucca-lanzellotti" target="_blank" rel="noopener">
+            <svg class="linkedin-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.33 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.11 20.45H3.55V9h3.56v11.45ZM22.23 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.46c.98 0 1.77-.77 1.77-1.72V1.72C24 .77 23.21 0 22.23 0Z"/>
+            </svg>
+            LinkedIn
+          </a>
         </div>
       </div>
       <div class="eyebrow">Painel de inteligência política</div>
@@ -449,13 +501,15 @@
       <div class="card accent-blue"><div class="metric-label">% ausência não just.</div><div class="metric-value" id="kpiUnjustifiedAbsence">0%</div></div>
       <div class="card accent-green"><div class="metric-label">Votações PEC</div><div class="metric-value" id="kpiPecVotes">0</div></div>
     </section>
+    <button class="mobile-toggle" type="button" data-toggle-kpis>Mostrar todos os indicadores</button>
 
     <section class="section-block" id="gastos">
       <div class="block-heading">
         <h2>Gastos</h2>
         <span>Cota parlamentar, categorias e média por partido</span>
       </div>
-      <div class="grid">
+      <button class="mobile-toggle" type="button" data-toggle-section="gastosGrid">Mostrar todos os gráficos de gastos</button>
+      <div class="grid mobile-collapsible" id="gastosGrid">
       <div class="card">
         <h2 class="section-title">Custo total por partido</h2>
         <div id="partyBars"></div>
@@ -480,7 +534,8 @@
         <h2>Presença e ausências</h2>
         <span>Eventos legislativos e sessões de plenário</span>
       </div>
-      <div class="grid">
+      <button class="mobile-toggle" type="button" data-toggle-section="presencaGrid">Mostrar todos os gráficos de presença</button>
+      <div class="grid mobile-collapsible" id="presencaGrid">
       <div class="card">
         <h2 class="section-title">% presença relativa por partido</h2>
         <div id="partyPresenceBars"></div>
@@ -605,6 +660,7 @@
       const name = nameFilter.value.trim().toLowerCase();
       const term = pecFilter.value.trim().toLowerCase();
 
+      const limit = window.matchMedia('(max-width: 720px)').matches ? 80 : 300;
       return PEC_VOTE_DATA.filter(row => {
         const haystack = [
           row.proposicao_titulo,
@@ -619,7 +675,7 @@
           (!party || row.siglaPartido === party) &&
           (!name || String(row.nome || '').toLowerCase().includes(name)) &&
           (!term || haystack.includes(term));
-      }).slice(0, 300);
+      }).slice(0, limit);
     }
 
     function sum(rows, field) {
@@ -748,6 +804,21 @@
     setOptions(partyFilter, PARTIES, 'Todos');
     renderStaticBars('categoryShareBars', CATEGORY_DATA, 'tipoDespesa', 'share_gasto_pct', '', value => formatPct.format(value) + '%');
     renderStaticBars('partyAverageBars', PARTY_DATA, 'siglaPartido', 'gasto_medio_por_candidato', 'party', value => formatMoney.format(value));
+    document.querySelector('[data-toggle-kpis]').addEventListener('click', event => {
+      document.body.classList.toggle('show-all-kpis');
+      event.currentTarget.textContent = document.body.classList.contains('show-all-kpis')
+        ? 'Mostrar menos indicadores'
+        : 'Mostrar todos os indicadores';
+    });
+    document.querySelectorAll('[data-toggle-section]').forEach(button => {
+      button.addEventListener('click', event => {
+        const target = document.getElementById(event.currentTarget.dataset.toggleSection);
+        target.classList.toggle('is-expanded');
+        event.currentTarget.textContent = target.classList.contains('is-expanded')
+          ? 'Mostrar menos'
+          : 'Mostrar todos os gráficos';
+      });
+    });
     [stateFilter, partyFilter, nameFilter, sortFilter, pecFilter].forEach(element => element.addEventListener('input', render));
     render();
   </script>
