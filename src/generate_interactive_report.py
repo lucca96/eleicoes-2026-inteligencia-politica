@@ -849,6 +849,230 @@ def render_html(report_df: pd.DataFrame) -> str:
       font-size: 12px;
       line-height: 1.35;
     }}
+    .public-intro {{
+      display: grid;
+      grid-template-columns: minmax(280px, 1.1fr) minmax(280px, 0.9fr);
+      gap: 14px;
+      align-items: stretch;
+    }}
+    .intro-card {{
+      display: grid;
+      gap: 14px;
+      border-radius: var(--radius);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--gov-blue);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }}
+    .intro-card h2 {{
+      margin: 0;
+      color: var(--gov-blue-dark);
+      font-size: 22px;
+    }}
+    .intro-card p {{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }}
+    .main-search {{
+      display: grid;
+      gap: 8px;
+    }}
+    .main-search input {{
+      min-height: 54px;
+      border-radius: 16px;
+      font-size: 17px;
+      padding: 10px 18px;
+    }}
+    .notice {{
+      border-radius: var(--radius);
+      background: #fff8df;
+      border: 1px solid #f4d06f;
+      color: #604a00;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.4;
+    }}
+    .quick-insights {{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }}
+    .quick-card {{
+      display: grid;
+      gap: 5px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 12px;
+      min-height: 90px;
+    }}
+    .quick-card span {{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 720;
+      text-transform: uppercase;
+    }}
+    .quick-card strong {{
+      color: var(--gov-blue-dark);
+      font-size: 15px;
+      line-height: 1.2;
+    }}
+    .quick-card em {{
+      color: var(--muted);
+      font-style: normal;
+      font-size: 12px;
+    }}
+    .profile-card {{
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: start;
+    }}
+    .avatar {{
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: var(--gov-blue);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+    }}
+    .profile-main {{
+      display: grid;
+      gap: 10px;
+    }}
+    .profile-main h2 {{
+      margin: 0;
+      color: var(--gov-blue-dark);
+      font-size: 22px;
+    }}
+    .profile-meta {{
+      color: var(--muted);
+      font-weight: 700;
+    }}
+    .profile-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 10px;
+    }}
+    .profile-stat {{
+      display: grid;
+      gap: 3px;
+      background: #f7f9fb;
+      border-radius: 12px;
+      padding: 10px;
+    }}
+    .profile-stat span {{
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 760;
+    }}
+    .profile-stat strong {{
+      color: var(--gov-blue-dark);
+      font-size: 17px;
+    }}
+    .comparison-list {{
+      display: grid;
+      gap: 6px;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.35;
+    }}
+    .rank-grid {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(280px, 1fr));
+      gap: 14px;
+    }}
+    .ranking-list {{
+      display: grid;
+      gap: 9px;
+    }}
+    .rank-item {{
+      display: grid;
+      gap: 3px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }}
+    .rank-item:last-child {{ border-bottom: 0; padding-bottom: 0; }}
+    .rank-head {{
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--gov-blue-dark);
+      font-weight: 760;
+    }}
+    .rank-context {{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }}
+    .matrix {{
+      position: relative;
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(90deg, transparent calc(50% - 1px), #d6e0ef calc(50% - 1px), #d6e0ef calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(0deg, transparent calc(50% - 1px), #d6e0ef calc(50% - 1px), #d6e0ef calc(50% + 1px), transparent calc(50% + 1px)),
+        #fff;
+      overflow: hidden;
+    }}
+    .matrix-label {{
+      position: absolute;
+      color: var(--muted);
+      font-size: 11px;
+      max-width: 160px;
+      line-height: 1.25;
+      background: rgba(255,255,255,.82);
+      border-radius: 8px;
+      padding: 5px 7px;
+    }}
+    .matrix-label.tl {{ top: 8px; left: 8px; }}
+    .matrix-label.tr {{ top: 8px; right: 8px; text-align: right; }}
+    .matrix-label.bl {{ bottom: 8px; left: 8px; }}
+    .matrix-label.br {{ bottom: 8px; right: 8px; text-align: right; }}
+    .matrix-dot {{
+      position: absolute;
+      transform: translate(-50%, 50%);
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 3px 10px rgba(19, 46, 91, 0.2);
+      background: var(--gov-blue);
+      cursor: pointer;
+    }}
+    .creator-grid {{
+      display: grid;
+      grid-template-columns: minmax(280px, 0.9fr) minmax(280px, 1.1fr);
+      gap: 14px;
+    }}
+    .creator-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }}
+    textarea {{
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      border: 1px solid #b8c8df;
+      border-radius: 14px;
+      padding: 12px;
+      color: var(--ink);
+      font: inherit;
+      line-height: 1.45;
+    }}
+    .source-line {{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      margin-top: 10px;
+    }}
     .filter-context {{
       display: flex;
       flex-wrap: wrap;
@@ -1179,6 +1403,8 @@ def render_html(report_df: pd.DataFrame) -> str:
     footer a {{ color: var(--gov-blue); font-weight: 720; }}
     @media (max-width: 1100px) {{
       .kpis, .insight-row, .grid, .definition-row {{ grid-template-columns: 1fr 1fr; }}
+      .public-intro, .creator-grid {{ grid-template-columns: 1fr; }}
+      .rank-grid {{ grid-template-columns: 1fr; }}
       .filters {{ grid-template-columns: 1fr 1fr; }}
       main {{ padding-top: 292px; }}
     }}
@@ -1259,6 +1485,11 @@ def render_html(report_df: pd.DataFrame) -> str:
         grid-template-columns: 1fr;
         gap: 8px;
       }}
+      .public-intro, .quick-insights, .profile-card, .profile-grid, .rank-grid, .creator-grid {{
+        grid-template-columns: 1fr;
+      }}
+      .avatar {{ width: 58px; height: 58px; font-size: 19px; }}
+      .matrix {{ min-height: 300px; }}
       .kpis .card {{
         min-height: 116px;
         padding: 12px;
@@ -1348,10 +1579,14 @@ def render_html(report_df: pd.DataFrame) -> str:
       </div>
       <nav class="section-tabs" aria-label="Seções do relatório">
         <a href="#visao-geral">Visão geral</a>
+        <a href="#buscar-deputado">Buscar deputado</a>
+        <a href="#rankings">Rankings</a>
         <a href="#gastos">Gastos</a>
         <a href="#presenca">Presença</a>
-        <a href="#pecs">PECs</a>
+        <a href="#pecs">Votações</a>
+        <a href="#videos-posts">Para vídeos e posts</a>
         <a href="#detalhes">Detalhes</a>
+        <a href="#metodologia">Metodologia</a>
       </nav>
       <div class="filters">
         <label>Estado<select id="stateFilter"></select></label>
@@ -1381,6 +1616,27 @@ def render_html(report_df: pd.DataFrame) -> str:
       </div>
     </section>
 
+    <section class="public-intro" id="buscar-deputado">
+      <div class="intro-card">
+        <h2>Entenda em 30 segundos</h2>
+        <p>Este painel ajuda você a entender como deputados federais usam recursos públicos, comparecem às atividades parlamentares e votam em PECs. Use a busca para encontrar um deputado, partido ou estado.</p>
+        <div class="main-search">
+          <label>Busca principal<input id="mainSearch" list="mainSearchList" type="search" placeholder="Digite o nome de um deputado, partido ou estado"></label>
+          <datalist id="mainSearchList"></datalist>
+        </div>
+        <div class="notice">Use estes dados com responsabilidade. O painel aponta padrões e comparações, mas não comprova irregularidades individualmente.</div>
+      </div>
+      <div class="quick-insights" id="quickInsights"></div>
+    </section>
+
+    <section class="section-block" id="ficha-deputado">
+      <div class="block-heading">
+        <h2>Ficha do deputado</h2>
+        <span>Resumo simples do recorte atual</span>
+      </div>
+      <div class="card profile-card" id="deputyProfile"></div>
+    </section>
+
     <section class="kpis" aria-label="Indicadores principais">
       <div class="card accent-blue"><div class="metric-label">Deputados</div><div class="metric-value" id="kpiDeputies">{initial_kpis["deputies"]}</div></div>
       <div class="card accent-green"><div class="metric-label">Gasto mandato <i class="info-tip" tabindex="0" data-tip="Gasto mandato = cota parlamentar usada pelo deputado no mandato: passagens, divulgação, escritório, combustível e outras despesas reembolsáveis.">i</i></div><div class="metric-value" id="kpiExpenses">{initial_kpis["expenses"]}</div><div class="metric-sub" id="kpiExpensesYoy">Dif. YoY: {initial_kpis["expense_yoy"]}</div></div>
@@ -1395,6 +1651,35 @@ def render_html(report_df: pd.DataFrame) -> str:
       <div class="definition"><strong>Gasto</strong><span>É a cota parlamentar usada no mandato: reembolsos e despesas de atividade parlamentar.</span></div>
       <div class="definition"><strong>Remuneração</strong><span>É o subsídio bruto estimado. Entra no custo, mas não é gasto de cota.</span></div>
       <div class="definition"><strong>Custo total</strong><span>É gasto de cota + remuneração. Use para estimar o custo público agregado.</span></div>
+    </section>
+
+    <section class="section-block" id="rankings">
+      <div class="block-heading">
+        <h2>Rankings com contexto</h2>
+        <span>Listas comparativas para responder perguntas rápidas</span>
+      </div>
+      <div class="rank-grid">
+        <div class="card"><h2 class="section-title">Quem teve o maior custo total aproximado?</h2><div class="ranking-list" id="rankCost"></div><div class="source-line">Fonte: Dados públicos da Câmara dos Deputados · Atualizado em {data_updated_label}</div></div>
+        <div class="card"><h2 class="section-title">Quem teve maior custo por presença registrada?</h2><div class="ranking-list" id="rankCostPresence"></div><div class="source-line">Fonte: Dados públicos da Câmara dos Deputados · Atualizado em {data_updated_label}</div></div>
+        <div class="card"><h2 class="section-title">Quem teve maior aumento de gasto no ano?</h2><div class="ranking-list" id="rankYoy"></div><div class="source-line">Fonte: Dados públicos da Câmara dos Deputados · Atualizado em {data_updated_label}</div></div>
+        <div class="card"><h2 class="section-title">Quem tem mais ausência não justificada?</h2><div class="ranking-list" id="rankAbsence"></div><div class="source-line">Fonte: Dados públicos da Câmara dos Deputados · Atualizado em {data_updated_label}</div></div>
+      </div>
+    </section>
+
+    <section class="section-block" id="matriz">
+      <div class="block-heading">
+        <h2>Matriz gasto x presença</h2>
+        <span>Identifique rapidamente deputados fora do padrão</span>
+      </div>
+      <div class="card">
+        <div class="matrix" id="attentionMatrix">
+          <div class="matrix-label tl">Baixo custo + alta presença<br>Boa eficiência relativa</div>
+          <div class="matrix-label tr">Alto custo + alta presença<br>Custo alto, mas com atividade registrada</div>
+          <div class="matrix-label bl">Baixo custo + baixa presença<br>Baixa atividade aparente</div>
+          <div class="matrix-label br">Alto custo + baixa presença<br>Ponto de atenção</div>
+        </div>
+        <div class="source-line">Eixo X: custo total aproximado · Eixo Y: presença comparada aos demais · tamanho: gasto do mandato</div>
+      </div>
     </section>
 
     <section class="section-block" id="gastos">
@@ -1558,6 +1843,40 @@ def render_html(report_df: pd.DataFrame) -> str:
       </div>
       </div>
     </section>
+
+    <section class="section-block" id="videos-posts">
+      <div class="block-heading">
+        <h2>Para vídeos e posts</h2>
+        <span>Texto neutro pronto para usar como base</span>
+      </div>
+      <div class="creator-grid">
+        <div class="card">
+          <h2 class="section-title">Roteiro de 30 segundos</h2>
+          <p class="source-line">Selecione um deputado na busca principal para gerar um roteiro individual. O texto é neutro e inclui ressalva metodológica.</p>
+          <div class="creator-actions">
+            <button class="action-button" type="button" id="copyVideoScript">Copiar roteiro</button>
+            <button class="action-button" type="button" id="exportStoryCard">Exportar card PNG</button>
+            <button class="action-button" type="button" id="copySource">Copiar fonte dos dados</button>
+          </div>
+        </div>
+        <div class="card">
+          <textarea id="videoScript" readonly></textarea>
+          <div class="notice">Antes de publicar, confira o contexto completo: gasto sozinho não conta a história toda. Compare presença, justificativas, estado, partido, tipo de despesa e votações.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block" id="metodologia">
+      <div class="block-heading">
+        <h2>Como ler estes dados</h2>
+        <span>Transparência e prevenção contra interpretações erradas</span>
+      </div>
+      <div class="card">
+        <p>Este painel organiza dados públicos da Câmara dos Deputados. As métricas apresentadas servem para comparação e fiscalização cidadã, mas não devem ser interpretadas isoladamente.</p>
+        <p>Maior gasto não significa automaticamente irregularidade. Menor presença comparada aos demais não significa automaticamente falta ao trabalho. Os dados precisam ser analisados com contexto, fonte e metodologia.</p>
+        <p><strong>Fonte:</strong> Dados públicos da Câmara dos Deputados · <strong>Atualizado em:</strong> {data_updated_label}</p>
+      </div>
+    </section>
   </main>
   <footer>
     Dados atualizados em: <strong>{data_updated_label}</strong> · Fonte:
@@ -1581,6 +1900,8 @@ def render_html(report_df: pd.DataFrame) -> str:
     const stateFilter = document.getElementById('stateFilter');
     const partyFilter = document.getElementById('partyFilter');
     const nameFilter = document.getElementById('nameFilter');
+    const mainSearch = document.getElementById('mainSearch');
+    const mainSearchList = document.getElementById('mainSearchList');
     const sortFilter = document.getElementById('sortFilter');
     const pecFilter = document.getElementById('pecFilter');
     const pecSelect = document.getElementById('pecSelect');
@@ -1592,6 +1913,8 @@ def render_html(report_df: pd.DataFrame) -> str:
     let pecSort = {{ field: 'data_ultima', direction: 'desc' }};
     let lastCandidateRows = [];
     let lastPecRows = [];
+    let selectedDeputy = null;
+    const sourceText = 'Fonte: Dados públicos da Câmara dos Deputados, organizados no dashboard Câmara 2026. Consulta realizada em {data_updated_label}.';
 
     function setOptions(select, values, allLabel) {{
       select.innerHTML = '<option value="">' + allLabel + '</option>' +
@@ -1705,6 +2028,36 @@ def render_html(report_df: pd.DataFrame) -> str:
     function avg(rows, field) {{
       if (!rows.length) return 0;
       return sum(rows, field) / rows.length;
+    }}
+
+    function formatSignedPctDiff(value, baseline) {{
+      if (!baseline) return 'sem média de referência';
+      const diff = (Number(value || 0) - baseline) / baseline * 100;
+      const direction = diff >= 0 ? 'acima' : 'abaixo';
+      return `${{formatPct.format(Math.abs(diff))}}% ${{direction}}`;
+    }}
+
+    function formatSignedPointDiff(value, baseline) {{
+      const diff = Number(value || 0) - Number(baseline || 0);
+      const direction = diff >= 0 ? 'acima' : 'abaixo';
+      return `${{formatPct.format(Math.abs(diff))}} p.p. ${{direction}}`;
+    }}
+
+    function partyRowsFor(row) {{
+      return DATA.filter(item => item.siglaPartido === row.siglaPartido);
+    }}
+
+    function stateRowsFor(row) {{
+      return DATA.filter(item => item.siglaUf === row.siglaUf);
+    }}
+
+    function getInitials(name) {{
+      return String(name || '?').split(/\\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase();
+    }}
+
+    function selectedOrFirst(rows) {{
+      if (selectedDeputy && rows.some(row => row.idDeputado === selectedDeputy.idDeputado)) return selectedDeputy;
+      return rows[0] || DATA[0];
     }}
 
     function groupedSum(rows, key, value) {{
@@ -1846,6 +2199,131 @@ def render_html(report_df: pd.DataFrame) -> str:
           </div>
         </div>
       `).join('');
+    }}
+
+    function renderQuickInsights(rows) {{
+      const pool = rows.length ? rows : DATA;
+      const byCost = [...pool].sort((a, b) => Number(b.custo_total_estimado || 0) - Number(a.custo_total_estimado || 0))[0];
+      const byCostPresence = [...pool].sort((a, b) => Number(b.custo_por_presenca || 0) - Number(a.custo_por_presenca || 0))[0];
+      const byYoy = [...pool].sort((a, b) => Number(b.diferenca_yoy || 0) - Number(a.diferenca_yoy || 0))[0];
+      const byAbsence = [...pool].sort((a, b) => Number(b.pct_ausencia_nao_justificada || 0) - Number(a.pct_ausencia_nao_justificada || 0))[0];
+      const spotlight = selectedOrFirst(pool);
+      const cards = [
+        ['Maior custo total', byCost, formatCompactMoney(byCost?.custo_total_estimado)],
+        ['Maior custo por presença', byCostPresence, formatCompactMoney(byCostPresence?.custo_por_presenca)],
+        ['Maior aumento no ano', byYoy, formatCompactMoney(byYoy?.diferenca_yoy)],
+        ['Mais ausências não justificadas', byAbsence, formatPct.format(Number(byAbsence?.pct_ausencia_nao_justificada || 0)) + '%'],
+        ['Deputado em destaque', spotlight, formatCompactMoney(spotlight?.custo_total_estimado)]
+      ];
+      document.getElementById('quickInsights').innerHTML = cards.map(([label, row, value]) => `
+        <div class="quick-card">
+          <span>${{label}}</span>
+          <strong>${{escapeHtml(row?.nome || 'Sem dados')}}</strong>
+          <em>${{escapeHtml(row ? `${{row.siglaPartido}}-${{row.siglaUf}} · ${{value}}` : '')}}</em>
+        </div>
+      `).join('');
+    }}
+
+    function renderDeputyProfile(rows) {{
+      const row = selectedOrFirst(rows);
+      if (!row) return;
+      selectedDeputy = row;
+      const partyRows = partyRowsFor(row);
+      const stateRows = stateRowsFor(row);
+      const chamberAvgCost = avg(DATA, 'custo_total_estimado');
+      const partyAvgCost = avg(partyRows, 'custo_total_estimado');
+      const stateAvgCost = avg(stateRows, 'custo_total_estimado');
+      const chamberPresence = avg(DATA, 'indice_presenca_relativa');
+      document.getElementById('deputyProfile').innerHTML = `
+        <div class="avatar">${{escapeHtml(getInitials(row.nome))}}</div>
+        <div class="profile-main">
+          <div>
+            <h2>${{escapeHtml(row.nome)}}</h2>
+            <div class="profile-meta">${{escapeHtml(row.siglaPartido)}}-${{escapeHtml(row.siglaUf)}}</div>
+          </div>
+          <div class="profile-grid">
+            <div class="profile-stat"><span>Custo total aproximado</span><strong>${{formatCompactMoney(row.custo_total_estimado)}}</strong></div>
+            <div class="profile-stat"><span>Gasto do mandato</span><strong>${{formatCompactMoney(row.valor_liquido_total)}}</strong></div>
+            <div class="profile-stat"><span>Salários no período</span><strong>${{formatCompactMoney(row.valor_subsidio_bruto_total)}}</strong></div>
+            <div class="profile-stat"><span>Presença comparada</span><strong>${{formatPct.format(Number(row.indice_presenca_relativa || 0))}}%</strong></div>
+            <div class="profile-stat"><span>Ausência não just.</span><strong>${{formatPct.format(Number(row.pct_ausencia_nao_justificada || 0))}}%</strong></div>
+            <div class="profile-stat"><span>Votos em PECs</span><strong>${{formatNumber.format(Number(row.qtd_votacoes_pec || 0))}}</strong></div>
+          </div>
+          <div class="comparison-list">
+            <span>Gasto/custo: ${{formatSignedPctDiff(row.custo_total_estimado, chamberAvgCost)}} da média da Câmara.</span>
+            <span>Comparação com partido: ${{formatSignedPctDiff(row.custo_total_estimado, partyAvgCost)}} da média do ${{escapeHtml(row.siglaPartido)}}.</span>
+            <span>Comparação com UF: ${{formatSignedPctDiff(row.custo_total_estimado, stateAvgCost)}} da média de ${{escapeHtml(row.siglaUf)}}.</span>
+            <span>Presença: ${{formatSignedPointDiff(row.indice_presenca_relativa, chamberPresence)}} da média geral.</span>
+          </div>
+          <div class="notice">Atenção: maior gasto não significa, sozinho, pior atuação. O dado deve ser analisado junto com presença, justificativas, estado de origem, atividade parlamentar e tipo de despesa.</div>
+        </div>
+      `;
+    }}
+
+    function rankContext(row, valueField) {{
+      const chamberAvg = avg(DATA, valueField);
+      const partyAvg = avg(partyRowsFor(row), valueField);
+      const stateAvg = avg(stateRowsFor(row), valueField);
+      return `${{formatSignedPctDiff(row[valueField], chamberAvg)}} da média da Câmara · ${{formatSignedPctDiff(row[valueField], partyAvg)}} do partido · ${{formatSignedPctDiff(row[valueField], stateAvg)}} da UF`;
+    }}
+
+    function renderRanking(targetId, rows, field, formatter, limit = 10, ascending = false) {{
+      const ranked = [...rows]
+        .sort((a, b) => ascending ? Number(a[field] || 0) - Number(b[field] || 0) : Number(b[field] || 0) - Number(a[field] || 0))
+        .slice(0, limit);
+      document.getElementById(targetId).innerHTML = ranked.map((row, index) => `
+        <div class="rank-item">
+          <div class="rank-head"><span>${{index + 1}}. ${{escapeHtml(row.nome)}} <small>${{escapeHtml(row.siglaPartido)}}-${{escapeHtml(row.siglaUf)}}</small></span><strong>${{formatter(row[field])}}</strong></div>
+          <div class="rank-context">${{rankContext(row, field)}} · Variação anual da cota: ${{formatCompactMoney(row.diferenca_yoy)}}</div>
+        </div>
+      `).join('');
+    }}
+
+    function renderRankings(rows) {{
+      const pool = rows.length ? rows : DATA;
+      renderRanking('rankCost', pool, 'custo_total_estimado', formatCompactMoney);
+      renderRanking('rankCostPresence', pool, 'custo_por_presenca', formatCompactMoney);
+      renderRanking('rankYoy', pool, 'diferenca_yoy', formatCompactMoney);
+      renderRanking('rankAbsence', pool, 'pct_ausencia_nao_justificada', value => formatPct.format(Number(value || 0)) + '%');
+    }}
+
+    function renderMatrix(rows) {{
+      const pool = (rows.length ? rows : DATA).slice(0, window.matchMedia('(max-width: 720px)').matches ? 80 : 160);
+      const maxCost = Math.max(...pool.map(row => Number(row.custo_total_estimado || 0)), 1);
+      const maxPresence = Math.max(...pool.map(row => Number(row.indice_presenca_relativa || 0)), 1);
+      const maxExpense = Math.max(...pool.map(row => Number(row.valor_liquido_total || 0)), 1);
+      document.getElementById('attentionMatrix').innerHTML = `
+        <div class="matrix-label tl">Baixo custo + alta presença<br>Boa eficiência relativa</div>
+        <div class="matrix-label tr">Alto custo + alta presença<br>Custo alto, mas com atividade registrada</div>
+        <div class="matrix-label bl">Baixo custo + baixa presença<br>Baixa atividade aparente</div>
+        <div class="matrix-label br">Alto custo + baixa presença<br>Ponto de atenção</div>
+      ` + pool.map(row => {{
+        const x = Number(row.custo_total_estimado || 0) / maxCost * 92 + 4;
+        const y = Number(row.indice_presenca_relativa || 0) / maxPresence * 88 + 6;
+        const size = Math.max(8, Math.min(24, Number(row.valor_liquido_total || 0) / maxExpense * 22));
+        return `<button class="matrix-dot" type="button" data-deputy-id="${{row.idDeputado}}" title="${{escapeHtml(row.nome)}} · ${{escapeHtml(row.siglaPartido)}}-${{escapeHtml(row.siglaUf)}} · custo ${{formatCompactMoney(row.custo_total_estimado)}} · presença ${{formatPct.format(Number(row.indice_presenca_relativa || 0))}}%" style="left:${{x}}%; bottom:${{y}}%; width:${{size}}px; height:${{size}}px;"></button>`;
+      }}).join('');
+    }}
+
+    function buildVideoScript(row) {{
+      const partyAvgCost = avg(partyRowsFor(row), 'custo_total_estimado');
+      const stateAvgCost = avg(stateRowsFor(row), 'custo_total_estimado');
+      return `Você sabe quanto custou a atuação do deputado ${{row.nome}}, do ${{row.siglaPartido}}-${{row.siglaUf}}, no período analisado?
+
+Segundo dados públicos organizados neste painel, o custo total aproximado foi de ${{formatCompactMoney(row.custo_total_estimado)}}.
+
+Esse valor fica ${{formatSignedPctDiff(row.custo_total_estimado, partyAvgCost)}} da média dos deputados do mesmo partido e ${{formatSignedPctDiff(row.custo_total_estimado, stateAvgCost)}} da média dos deputados do mesmo estado.
+
+No mesmo período, a presença comparada aos demais foi de ${{formatPct.format(Number(row.indice_presenca_relativa || 0))}}%, e o painel registra ${{formatNumber.format(Number(row.qtd_votacoes_pec || 0))}} votações em PECs.
+
+Mas atenção: gasto sozinho não conta a história toda. Também é preciso olhar presença, ausências, tipo de despesa, estado de origem e votações.
+
+Fonte: Dados públicos da Câmara dos Deputados, organizados no dashboard Câmara 2026. Consulta realizada em {data_updated_label}.`;
+    }}
+
+    function renderCreator(rows) {{
+      const row = selectedOrFirst(rows);
+      if (row) document.getElementById('videoScript').value = buildVideoScript(row);
     }}
 
     function classForDelta(value) {{
@@ -2009,7 +2487,42 @@ def render_html(report_df: pd.DataFrame) -> str:
       stateFilter.value = params.get('uf') || '';
       partyFilter.value = params.get('partido') || '';
       nameFilter.value = params.get('deputado') || '';
+      mainSearch.value = params.get('deputado') || params.get('partido') || params.get('uf') || '';
       pecSelect.value = params.get('pec') || '';
+    }}
+
+    function populateMainSearchList() {{
+      const deputyOptions = DATA.slice(0, 800).map(row => `<option value="${{escapeHtml(row.nome)}} (${{escapeHtml(row.siglaPartido)}}-${{escapeHtml(row.siglaUf)}})">`);
+      const partyOptions = PARTIES.map(value => `<option value="${{escapeHtml(value)}}">`);
+      const stateOptions = STATES.map(value => `<option value="${{escapeHtml(value)}}">`);
+      mainSearchList.innerHTML = deputyOptions.concat(partyOptions, stateOptions).join('');
+    }}
+
+    function applyMainSearch(value) {{
+      const raw = value.trim();
+      const upper = raw.toUpperCase();
+      const nameOnly = raw.replace(/\\s+\\([^)]+\\)\\s*$/, '');
+      if (!raw) {{
+        nameFilter.value = '';
+        selectedDeputy = null;
+        return;
+      }}
+      if (STATES.includes(upper)) {{
+        stateFilter.value = upper;
+        nameFilter.value = '';
+        selectedDeputy = null;
+        return;
+      }}
+      if (PARTIES.includes(upper)) {{
+        partyFilter.value = upper;
+        nameFilter.value = '';
+        selectedDeputy = null;
+        return;
+      }}
+      nameFilter.value = nameOnly;
+      selectedDeputy = DATA.find(row => String(row.nome || '').toLowerCase() === nameOnly.toLowerCase()) ||
+        DATA.find(row => String(row.nome || '').toLowerCase().includes(nameOnly.toLowerCase())) ||
+        null;
     }}
 
     function resetPages() {{
@@ -2043,6 +2556,86 @@ def render_html(report_df: pd.DataFrame) -> str:
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
+    }}
+
+    function copyText(text) {{
+      if (navigator.clipboard) {{
+        navigator.clipboard.writeText(text);
+        return;
+      }}
+      const tmp = document.createElement('textarea');
+      tmp.value = text;
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand('copy');
+      document.body.removeChild(tmp);
+    }}
+
+    function exportStoryCard() {{
+      const row = selectedDeputy || selectedOrFirst(filteredData());
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#f7f9fb';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#1351b4';
+      ctx.fillRect(0, 0, canvas.width, 150);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 46px Arial';
+      ctx.fillText('Câmara 2026', 70, 95);
+      ctx.fillStyle = '#071d41';
+      ctx.font = 'bold 58px Arial';
+      ctx.fillText(row.nome, 70, 260);
+      ctx.font = 'bold 36px Arial';
+      ctx.fillText(`${{row.siglaPartido}}-${{row.siglaUf}}`, 70, 320);
+      const items = [
+        ['Custo total aproximado', formatCompactMoney(row.custo_total_estimado)],
+        ['Gasto do mandato', formatCompactMoney(row.valor_liquido_total)],
+        ['Presença comparada aos demais', formatPct.format(Number(row.indice_presenca_relativa || 0)) + '%'],
+        ['Ausência não justificada', formatPct.format(Number(row.pct_ausencia_nao_justificada || 0)) + '%'],
+        ['Votos em PECs', formatNumber.format(Number(row.qtd_votacoes_pec || 0))]
+      ];
+      let y = 460;
+      items.forEach(([label, value]) => {{
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(70, y, 940, 160);
+        ctx.strokeStyle = '#d6e0ef';
+        ctx.strokeRect(70, y, 940, 160);
+        ctx.fillStyle = '#56616f';
+        ctx.font = 'bold 28px Arial';
+        ctx.fillText(label.toUpperCase(), 105, y + 52);
+        ctx.fillStyle = '#071d41';
+        ctx.font = 'bold 46px Arial';
+        ctx.fillText(value, 105, y + 112);
+        y += 190;
+      }});
+      ctx.fillStyle = '#604a00';
+      ctx.font = '28px Arial';
+      wrapCanvasText(ctx, 'Use estes dados com responsabilidade. O painel aponta padrões e comparações, não comprova irregularidades individualmente.', 70, 1480, 920, 38);
+      ctx.fillStyle = '#56616f';
+      ctx.font = '24px Arial';
+      wrapCanvasText(ctx, sourceText, 70, 1700, 920, 34);
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `camara-2026-${{String(row.nome || 'deputado').toLowerCase().replace(/[^a-z0-9]+/g, '-')}}.png`;
+      link.click();
+    }}
+
+    function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {{
+      const words = text.split(' ');
+      let line = '';
+      words.forEach(word => {{
+        const testLine = line + word + ' ';
+        if (ctx.measureText(testLine).width > maxWidth && line) {{
+          ctx.fillText(line, x, y);
+          line = word + ' ';
+          y += lineHeight;
+        }} else {{
+          line = testLine;
+        }}
+      }});
+      ctx.fillText(line, x, y);
     }}
 
     function render() {{
@@ -2083,6 +2676,11 @@ def render_html(report_df: pd.DataFrame) -> str:
       );
       renderStackedPartyCosts(rows);
       renderPartyShareCompare(rows);
+      renderQuickInsights(rows);
+      renderDeputyProfile(rows);
+      renderRankings(rows);
+      renderMatrix(rows);
+      renderCreator(rows);
       renderTable(rows);
       renderPecVotes(filteredPecVotes());
     }}
@@ -2090,6 +2688,7 @@ def render_html(report_df: pd.DataFrame) -> str:
     setOptions(stateFilter, STATES, 'Todos');
     setOptions(partyFilter, PARTIES, 'Todos');
     setOptions(pecSelect, PEC_OPTIONS, 'Todas');
+    populateMainSearchList();
     applyUrlFilters();
     renderStaticBars('categoryShareBars', CATEGORY_DATA, 'categoria_tratada', 'share_gasto_pct', '', value => formatPct.format(value) + '%');
     document.querySelectorAll('[data-toggle-section]').forEach(button => {{
@@ -2113,6 +2712,14 @@ def render_html(report_df: pd.DataFrame) -> str:
     [stateFilter, partyFilter, nameFilter, pecFilter, pecSelect, partyMetricFilter].forEach(element => {{
       element.addEventListener('input', () => scheduleRender({{ reset: true }}));
     }});
+    mainSearch.addEventListener('input', () => {{
+      applyMainSearch(mainSearch.value);
+      scheduleRender({{ reset: true }});
+    }});
+    nameFilter.addEventListener('input', () => {{
+      mainSearch.value = nameFilter.value;
+      selectedDeputy = null;
+    }});
     sortFilter.addEventListener('input', () => {{
       candidateSort = {{ field: sortFilter.value, direction: 'desc' }};
       scheduleRender({{ reset: true }});
@@ -2122,8 +2729,23 @@ def render_html(report_df: pd.DataFrame) -> str:
       if (!type) return;
       if (type === 'uf') stateFilter.value = '';
       if (type === 'partido') partyFilter.value = '';
-      if (type === 'deputado') nameFilter.value = '';
+      if (type === 'deputado') {{
+        nameFilter.value = '';
+        mainSearch.value = '';
+        selectedDeputy = null;
+      }}
       if (type === 'pec') pecSelect.value = '';
+      scheduleRender({{ reset: true }});
+    }});
+    document.getElementById('attentionMatrix').addEventListener('click', event => {{
+      const id = event.target.dataset.deputyId;
+      if (!id) return;
+      selectedDeputy = DATA.find(row => String(row.idDeputado) === String(id)) || null;
+      if (selectedDeputy) {{
+        nameFilter.value = selectedDeputy.nome;
+        mainSearch.value = `${{selectedDeputy.nome}} (${{selectedDeputy.siglaPartido}}-${{selectedDeputy.siglaUf}})`;
+        document.getElementById('ficha-deputado').scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+      }}
       scheduleRender({{ reset: true }});
     }});
     document.querySelectorAll('th[data-sort]').forEach(header => {{
@@ -2189,6 +2811,9 @@ def render_html(report_df: pd.DataFrame) -> str:
         {{ field: 'siglaOrgao', label: 'Orgao' }}
       ]);
     }});
+    document.getElementById('copyVideoScript').addEventListener('click', () => copyText(document.getElementById('videoScript').value));
+    document.getElementById('copySource').addEventListener('click', () => copyText(sourceText));
+    document.getElementById('exportStoryCard').addEventListener('click', exportStoryCard);
     render();
     updateSortHeaders();
   </script>
