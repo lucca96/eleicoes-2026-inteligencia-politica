@@ -639,11 +639,50 @@ def render_html(report_df: pd.DataFrame) -> str:
       margin-top: 0;
       margin-bottom: 10px;
     }}
+    .sticky-controls .insight-row {{
+      display: none;
+    }}
+    .sticky-brand {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 8px;
+    }}
+    .sticky-brand-main {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }}
+    .sticky-brand .gov-logo {{
+      width: 78px;
+    }}
+    .sticky-title {{
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }}
+    .sticky-title strong {{
+      color: var(--gov-blue-dark);
+      font-size: 15px;
+      line-height: 1.1;
+    }}
+    .sticky-title span {{
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }}
+    .sticky-brand .author-meta {{
+      flex: 0 0 auto;
+    }}
     main {{
       width: 100%;
       max-width: 1380px;
       margin: 0 auto;
-      padding: 178px 28px 34px;
+      padding: 236px 28px 34px;
       display: grid;
       gap: 18px;
     }}
@@ -1141,7 +1180,7 @@ def render_html(report_df: pd.DataFrame) -> str:
     @media (max-width: 1100px) {{
       .kpis, .insight-row, .grid, .definition-row {{ grid-template-columns: 1fr 1fr; }}
       .filters {{ grid-template-columns: 1fr 1fr; }}
-      main {{ padding-top: 240px; }}
+      main {{ padding-top: 292px; }}
     }}
     @media (max-width: 720px) {{
       .govbar {{
@@ -1176,6 +1215,23 @@ def render_html(report_df: pd.DataFrame) -> str:
         top: 0;
         padding: 8px 14px 10px;
       }}
+      .sticky-brand {{
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+      }}
+      .sticky-brand-main {{
+        width: 100%;
+      }}
+      .sticky-brand .gov-logo {{
+        width: 62px;
+      }}
+      .sticky-title strong {{
+        font-size: 13px;
+      }}
+      .sticky-title span {{
+        font-size: 11px;
+      }}
       .sticky-controls .section-tabs {{ margin-bottom: 8px; }}
       .sticky-controls .filters {{
         gap: 8px;
@@ -1191,7 +1247,7 @@ def render_html(report_df: pd.DataFrame) -> str:
       }}
       .filters, .grid {{ grid-template-columns: 1fr; }}
       main {{
-        padding-top: 282px;
+        padding-top: 338px;
       }}
       .sticky-controls .filters {{
         grid-template-columns: 1fr 1fr;
@@ -1268,6 +1324,28 @@ def render_html(report_df: pd.DataFrame) -> str:
   </header>
   <main>
     <section class="section-block sticky-controls" id="visao-geral">
+      <div class="sticky-brand">
+        <div class="sticky-brand-main">
+          <img
+            class="gov-logo"
+            src="https://www.gov.br/governodigital/pt-br/acessibilidade-e-usuario/atendimento-gov.br/imagens/gov-br_logo-svg.png/@@images/image"
+            alt="gov.br"
+          >
+          <div class="sticky-title">
+            <strong>Relatório Interativo da Câmara</strong>
+            <span>Inteligência política por Lucca Lanzellotti</span>
+          </div>
+        </div>
+        <div class="author-meta">
+          <strong>Por Lucca Lanzellotti, BI Expert</strong>
+          <a href="https://www.linkedin.com/in/lucca-lanzellotti" target="_blank" rel="noopener">
+            <svg class="linkedin-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.33 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.11 20.45H3.55V9h3.56v11.45ZM22.23 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.46c.98 0 1.77-.77 1.77-1.72V1.72C24 .77 23.21 0 22.23 0Z"/>
+            </svg>
+            LinkedIn
+          </a>
+        </div>
+      </div>
       <nav class="section-tabs" aria-label="Seções do relatório">
         <a href="#visao-geral">Visão geral</a>
         <a href="#gastos">Gastos</a>
@@ -1306,11 +1384,11 @@ def render_html(report_df: pd.DataFrame) -> str:
     <section class="kpis" aria-label="Indicadores principais">
       <div class="card accent-blue"><div class="metric-label">Deputados</div><div class="metric-value" id="kpiDeputies">{initial_kpis["deputies"]}</div></div>
       <div class="card accent-green"><div class="metric-label">Gasto mandato <i class="info-tip" tabindex="0" data-tip="Gasto mandato = cota parlamentar usada pelo deputado no mandato: passagens, divulgação, escritório, combustível e outras despesas reembolsáveis.">i</i></div><div class="metric-value" id="kpiExpenses">{initial_kpis["expenses"]}</div><div class="metric-sub" id="kpiExpensesYoy">Dif. YoY: {initial_kpis["expense_yoy"]}</div></div>
-      <div class="card accent-yellow"><div class="metric-label">Remuneração <i class="info-tip" tabindex="0" data-tip="Remuneração = subsídio bruto parlamentar estimado no mandato. Não é cota parlamentar.">i</i></div><div class="metric-value" id="kpiSalary">{initial_kpis["salary"]}</div><div class="metric-sub" id="kpiSalaryYoy">Dif. YoY da cota: {initial_kpis["expense_yoy"]}</div></div>
-      <div class="card accent-blue"><div class="metric-label">Custo total <i class="info-tip" tabindex="0" data-tip="Custo total = gasto do mandato, ou cota parlamentar, + remuneração bruta estimada no mandato.">i</i></div><div class="metric-value" id="kpiCost">{initial_kpis["cost"]}</div><div class="metric-sub" id="kpiCostYoy">Dif. YoY da cota: {initial_kpis["expense_yoy"]}</div></div>
-      <div class="card accent-green"><div class="metric-label">% presença relativa <i class="info-tip" tabindex="0" data-tip="Presença relativa = eventos com presença do deputado divididos pelo maior volume de presença registrado por qualquer deputado no período.">i</i></div><div class="metric-value" id="kpiPresencePct">{initial_kpis["presence"]}</div><div class="metric-sub" id="kpiPresenceYoy">Dif. YoY da cota: {initial_kpis["expense_yoy"]}</div></div>
-      <div class="card accent-blue"><div class="metric-label">% ausência não just. <i class="info-tip" tabindex="0" data-tip="Média percentual das ausências não justificadas em sessões de plenário para os deputados filtrados.">i</i></div><div class="metric-value" id="kpiUnjustifiedAbsence">{initial_kpis["unjustified_absence"]}</div><div class="metric-sub" id="kpiAbsenceYoy">Dif. YoY da cota: {initial_kpis["expense_yoy"]}</div></div>
-      <div class="card accent-green"><div class="metric-label">Votações PEC <i class="info-tip" tabindex="0" data-tip="Total de registros nominais de votação em proposições classificadas como PEC no mandato.">i</i></div><div class="metric-value" id="kpiPecVotes">{initial_kpis["pec_votes"]}</div><div class="metric-sub" id="kpiPecYoy">Dif. YoY da cota: {initial_kpis["expense_yoy"]}</div></div>
+      <div class="card accent-yellow"><div class="metric-label">Remuneração <i class="info-tip" tabindex="0" data-tip="Remuneração = subsídio bruto parlamentar estimado no mandato. Não é cota parlamentar.">i</i></div><div class="metric-value" id="kpiSalary">{initial_kpis["salary"]}</div><div class="metric-sub" id="kpiSalaryContext">Subsídio estimado, sem série YoY</div></div>
+      <div class="card accent-blue"><div class="metric-label">Custo total <i class="info-tip" tabindex="0" data-tip="Custo total = gasto do mandato, ou cota parlamentar, + remuneração bruta estimada no mandato.">i</i></div><div class="metric-value" id="kpiCost">{initial_kpis["cost"]}</div><div class="metric-sub" id="kpiCostYoy">Impacto YoY no custo: {initial_kpis["expense_yoy"]}</div></div>
+      <div class="card accent-green"><div class="metric-label">% presença relativa <i class="info-tip" tabindex="0" data-tip="Presença relativa = eventos com presença do deputado divididos pelo maior volume de presença registrado por qualquer deputado no período.">i</i></div><div class="metric-value" id="kpiPresencePct">{initial_kpis["presence"]}</div><div class="metric-sub" id="kpiPresenceContext">Vs. média Brasil: 0,0 p.p.</div></div>
+      <div class="card accent-blue"><div class="metric-label">% ausência não just. <i class="info-tip" tabindex="0" data-tip="Média percentual das ausências não justificadas em sessões de plenário para os deputados filtrados.">i</i></div><div class="metric-value" id="kpiUnjustifiedAbsence">{initial_kpis["unjustified_absence"]}</div><div class="metric-sub" id="kpiAbsenceContext">Vs. média Brasil: 0,0 p.p.</div></div>
+      <div class="card accent-green"><div class="metric-label">Votações PEC <i class="info-tip" tabindex="0" data-tip="Total de registros nominais de votação em proposições classificadas como PEC no mandato.">i</i></div><div class="metric-value" id="kpiPecVotes">{initial_kpis["pec_votes"]}</div><div class="metric-sub" id="kpiPecContext">Média por deputado: 0</div></div>
     </section>
 
     <section class="definition-row" aria-label="Definições rápidas">
@@ -1497,6 +1575,8 @@ def render_html(report_df: pd.DataFrame) -> str:
     const formatMoney = new Intl.NumberFormat('pt-BR', {{ style: 'currency', currency: 'BRL' }});
     const formatNumber = new Intl.NumberFormat('pt-BR');
     const formatPct = new Intl.NumberFormat('pt-BR', {{ maximumFractionDigits: 1 }});
+    const nationalPresenceAvg = DATA.length ? DATA.reduce((acc, row) => acc + Number(row.indice_presenca_relativa || 0), 0) / DATA.length : 0;
+    const nationalUnjustifiedAbsenceAvg = DATA.length ? DATA.reduce((acc, row) => acc + Number(row.pct_ausencia_nao_justificada || 0), 0) / DATA.length : 0;
 
     const stateFilter = document.getElementById('stateFilter');
     const partyFilter = document.getElementById('partyFilter');
@@ -1779,6 +1859,20 @@ def render_html(report_df: pd.DataFrame) -> str:
       target.classList.toggle('negative', Number(value || 0) <= 0);
     }}
 
+    function setNeutralSubtext(id, text) {{
+      const target = document.getElementById(id);
+      target.textContent = text;
+      target.classList.remove('positive', 'negative');
+    }}
+
+    function setPointDiffSubtext(id, value, invert = false) {{
+      const target = document.getElementById(id);
+      const sign = value > 0 ? '+' : '';
+      target.textContent = `Vs. média Brasil: ${{sign}}${{formatPct.format(value)}} p.p.`;
+      target.classList.toggle('positive', invert ? value < 0 : value > 0);
+      target.classList.toggle('negative', invert ? value >= 0 : value <= 0);
+    }}
+
     function renderTable(rows) {{
       const sortedRows = sortRows(rows, candidateSort);
       const maxPage = Math.max(Math.ceil(sortedRows.length / pageSize), 1);
@@ -1954,6 +2048,10 @@ def render_html(report_df: pd.DataFrame) -> str:
     function render() {{
       const rows = filteredData();
       const expenseYoy = sum(rows, 'diferenca_yoy');
+      const costTotal = sum(rows, 'custo_total_estimado');
+      const presenceDiff = avg(rows, 'indice_presenca_relativa') - nationalPresenceAvg;
+      const absenceDiff = avg(rows, 'pct_ausencia_nao_justificada') - nationalUnjustifiedAbsenceAvg;
+      const pecAvg = rows.length ? sum(rows, 'qtd_votacoes_pec') / rows.length : 0;
       updateActiveFilters();
       document.getElementById('kpiDeputies').textContent = formatNumber.format(rows.length);
       document.getElementById('kpiExpenses').textContent = formatCompactMoney(sum(rows, 'valor_liquido_total'));
@@ -1963,11 +2061,11 @@ def render_html(report_df: pd.DataFrame) -> str:
       document.getElementById('kpiUnjustifiedAbsence').textContent = formatPct.format(avg(rows, 'pct_ausencia_nao_justificada')) + '%';
       document.getElementById('kpiPecVotes').textContent = formatNumber.format(sum(rows, 'qtd_votacoes_pec'));
       setYoySubtext('kpiExpensesYoy', expenseYoy, 'Dif. YoY');
-      setYoySubtext('kpiSalaryYoy', expenseYoy);
-      setYoySubtext('kpiCostYoy', expenseYoy);
-      setYoySubtext('kpiPresenceYoy', expenseYoy);
-      setYoySubtext('kpiAbsenceYoy', expenseYoy);
-      setYoySubtext('kpiPecYoy', expenseYoy);
+      setNeutralSubtext('kpiSalaryContext', 'Subsídio estimado, sem série YoY');
+      setYoySubtext('kpiCostYoy', expenseYoy, costTotal ? `Impacto YoY no custo (${{formatPct.format(expenseYoy / costTotal * 100)}}%)` : 'Impacto YoY no custo');
+      setPointDiffSubtext('kpiPresenceContext', presenceDiff);
+      setPointDiffSubtext('kpiAbsenceContext', absenceDiff, true);
+      setNeutralSubtext('kpiPecContext', `Média por deputado: ${{formatPct.format(pecAvg)}}`);
       renderPartyMetricBars(rows);
       renderBars('stateBars', groupedSum(rows, 'siglaUf', 'custo_total_estimado'), '', value => formatCompactMoney(value));
       renderBars('partyPresenceBars', groupedAvg(rows, 'siglaPartido', 'indice_presenca_relativa'), 'presence', value => formatPct.format(value) + '%');
