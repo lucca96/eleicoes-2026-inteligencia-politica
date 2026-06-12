@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Painel de Inteligencia Politica 2026</title>
+  <title>Painel de Inteligência Política 2026</title>
   <style>
     @import url('https://fonts.cdnfonts.com/css/rawline');
     :root {
@@ -27,10 +27,9 @@
       background: var(--bg);
       color: var(--ink);
       font-family: Rawline, Raleway, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      overflow-x: clip;
     }
     img, svg, input, select, textarea, button { max-width: 100%; }
-    p, h1, h2, h3, span, strong, label, .card, .notice { min-width: 0; overflow-wrap: anywhere; }
+    p, h1, h2, h3, span, strong, label, summary, .card, .notice { min-width: 0; overflow-wrap: anywhere; }
     a { color: var(--blue); }
     .topbar {
       min-height: 52px;
@@ -46,9 +45,9 @@
       z-index: 20;
       min-width: 0;
       max-width: 100%;
-      overflow: clip;
     }
     .menu-button {
+      flex: 0 0 auto;
       width: 42px;
       height: 42px;
       border: 1px solid #b8c8df;
@@ -63,6 +62,7 @@
       gap: 2px;
       flex: 1 1 auto;
       min-width: 0;
+      max-width: 100%;
     }
     .top-title strong { font-size: 13px; }
     .top-title span { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -76,6 +76,7 @@
       text-decoration: none;
       white-space: nowrap;
     }
+    .topbar .author { display: none; }
     .author i {
       display: inline-grid;
       place-items: center;
@@ -110,6 +111,7 @@
       display: grid;
       align-content: start;
       gap: 12px;
+      max-width: 100%;
     }
     body.menu-open .drawer { transform: translateX(0); }
     body.menu-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
@@ -136,6 +138,7 @@
       margin: 0 auto;
       padding: 18px 14px;
       min-width: 0;
+      overflow-wrap: anywhere;
     }
     .hero {
       display: grid;
@@ -147,7 +150,7 @@
     h1 { margin: 0; font-size: 26px; line-height: 1.12; }
     .subtitle { margin: 0; color: var(--muted); line-height: 1.45; max-width: 100%; }
     main { display: grid; gap: 14px; padding-top: 14px; }
-    .grid { display: grid; gap: 12px; }
+    .grid { display: grid; gap: 12px; min-width: 0; }
     .kpis { grid-template-columns: 1fr; }
     .card {
       background: var(--panel);
@@ -166,6 +169,22 @@
     .accent-green { border-left: 5px solid var(--green); }
     .accent-yellow { border-left: 5px solid var(--yellow); }
     .filters { display: grid; gap: 10px; }
+    .filter-card { padding: 0; overflow: hidden; }
+    .filter-card summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px;
+      color: var(--blue);
+      font-weight: 820;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+    .filter-card summary::-webkit-details-marker { display: none; }
+    .filter-card summary::after { content: "+"; font-size: 20px; line-height: 1; }
+    .filter-card[open] summary::after { content: "−"; }
+    .filter-card .filters { padding: 0 14px 14px; }
     label { display: grid; gap: 6px; color: var(--ink); font-size: 12px; font-weight: 800; text-transform: uppercase; }
     input, select, textarea {
       width: 100%;
@@ -200,14 +219,15 @@
       display: grid;
       gap: 8px;
     }
-    .item-title { display: flex; justify-content: space-between; gap: 8px; align-items: start; font-weight: 820; }
+    .item-title { display: flex; justify-content: space-between; gap: 8px; align-items: start; font-weight: 820; min-width: 0; }
     .item-title small { color: var(--muted); font-weight: 760; }
     .item-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
-    .item-grid span { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; }
+    .item-grid span { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; min-width: 0; }
     .item-grid b { color: var(--ink); }
     .bars { display: grid; gap: 9px; }
     .bar-row { display: grid; gap: 5px; }
-    .bar-head { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 760; }
+    .bar-head { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 760; min-width: 0; }
+    .bar-head span { overflow-wrap: anywhere; }
     .bar-track { height: 10px; border-radius: 999px; background: #e8eef7; overflow: hidden; }
     .bar-fill { height: 100%; border-radius: inherit; background: var(--blue); }
     .notice { border: 1px solid #f4d06f; background: #fff8df; color: #604a00; border-radius: var(--radius); padding: 12px; line-height: 1.4; }
@@ -215,6 +235,18 @@
     .source-line { color: var(--muted); font-size: 12px; line-height: 1.4; }
     .landing-grid { display: grid; gap: 12px; }
     .landing-card { display: grid; text-decoration: none; color: inherit; }
+    .insight-list { display: grid; gap: 10px; }
+    .insight-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }
+    .insight-row:first-child { border-top: 0; padding-top: 0; }
+    .insight-row strong { display: block; }
+    .insight-row span { color: var(--muted); font-size: 12px; }
     footer { color: var(--muted); font-size: 12px; line-height: 1.45; }
     @media (min-width: 760px) {
       .hero, main, footer { padding-left: 24px; padding-right: 24px; }
@@ -225,6 +257,9 @@
       .landing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .topbar { padding-left: 24px; padding-right: 24px; }
+      .topbar .author { display: flex; flex: 0 0 auto; }
+      .filter-card summary { display: none; }
+      .filter-card .filters { padding: 14px; }
     }
   </style>
 </head>
@@ -232,10 +267,10 @@
   <div class="drawer-backdrop" data-close-menu></div>
   <aside class="drawer" aria-label="Menu principal">
     <div class="drawer-head">
-      <div><strong>Painel Politico 2026</strong><span>Dados publicos legislativos</span></div>
+      <div><strong>Painel Político 2026</strong><span>Dados públicos legislativos</span></div>
       <button class="close-button" type="button" data-close-menu aria-label="Fechar menu">×</button>
     </div>
-    <nav class="nav-list"><a class="nav-link is-active" href="index.html">Inicio</a>
+    <nav class="nav-list"><a class="nav-link is-active" href="index.html">Início</a>
 <a class="nav-link " href="deputados-federais.html">Deputados federais</a>
 <a class="nav-link " href="senadores.html">Senadores</a>
 <a class="nav-link " href="deputados-estaduais-rj.html">Deputados estaduais RJ</a>
@@ -244,24 +279,24 @@
   </aside>
   <header class="topbar">
     <button class="menu-button" type="button" id="openMenu" aria-label="Abrir menu">☰</button>
-    <div class="top-title"><strong>Painel Politico 2026</strong><span>Camara, Senado, TSE RJ e ALERJ</span></div>
+    <div class="top-title"><strong>Painel Político 2026</strong><span>Câmara, Senado e ALERJ</span></div>
     <a class="author" href="https://www.linkedin.com/in/lucca-lanzellotti" target="_blank" rel="noopener">Lucca <i>in</i></a>
   </header>
   <section class="hero">
-    <div class="eyebrow">Inteligencia politica por Lucca Lanzellotti</div>
-    <h1>Painel de Inteligencia Politica 2026</h1>
-    <p class="subtitle">Gasto parlamentar e sinais de comprometimento com o trabalho em dados publicos legislativos.</p>
+    <div class="eyebrow">Inteligência política por Lucca Lanzellotti</div>
+    <h1>Painel de Inteligência Política 2026</h1>
+    <p class="subtitle">Gasto parlamentar e sinais de comprometimento com o trabalho em dados públicos legislativos.</p>
   </section>
   <main>
     <section class="grid landing-grid">
       <a class="card landing-card accent-blue" href="deputados-federais.html">
         <div class="metric-label">Deputados federais</div>
         <div class="metric-value">R$ 722,919 mi</div>
-        <div class="metric-sub">Gasto parlamentar, presenca, ausencias e votacoes em PECs.</div>
+        <div class="metric-sub">Gasto parlamentar, presença, ausências e votações em PECs.</div>
       </a>
       <a class="card landing-card accent-green" href="senadores.html">
         <div class="metric-label">Senadores</div>
-        <div class="metric-value">R$ 0</div>
+        <div class="metric-value">R$ 99,471 mi</div>
         <div class="metric-sub">Gasto parlamentar CEAPS e votos nominais.</div>
       </a>
       <a class="card landing-card accent-yellow" href="deputados-estaduais-rj.html">
@@ -272,21 +307,49 @@
     </section>
     <section class="card accent-blue">
       <h2>O que este painel tenta responder</h2>
-      <p>Quem usa mais recurso publico? Quem aparece menos nos registros disponiveis de trabalho? Quais categorias concentram os gastos quando um parlamentar especifico e filtrado?</p>
-      <p class="muted">O painel aponta padroes para fiscalizacao cidadã. Maior gasto ou menor presenca nao comprovam irregularidade isoladamente.</p>
+      <p>Quem usa mais recurso público? Quem aparece menos nos registros disponíveis de trabalho? Quais categorias concentram os gastos quando um parlamentar específico é filtrado?</p>
+      <p class="muted">O painel aponta padrões para fiscalização cidadã. Maior gasto ou menor presença não comprova irregularidade isoladamente.</p>
     </section>
     <section class="grid landing-grid">
-      <div class="card"><div class="metric-label">Federais abaixo da mediana de presenca relativa</div><div class="metric-value">256</div></div>
+      <div class="card"><div class="metric-label">Federais abaixo da mediana de presença relativa</div><div class="metric-value">256</div></div>
       <div class="card"><div class="metric-label">Deputados estaduais RJ com gasto DOCIGP</div><div class="metric-value">88</div></div>
-      <div class="card"><div class="metric-label">Senadores com CEAPS no periodo</div><div class="metric-value">81</div></div>
+      <div class="card"><div class="metric-label">Senadores com cadastro no período</div><div class="metric-value">81</div></div>
+    </section>
+    <section class="grid two-col">
+      <div class="card">
+        <h2>Gasto federal por partido</h2>
+        <p class="source-line">Visão agregada para comparar blocos políticos antes de entrar em deputados individuais.</p>
+        <div class="insight-list"><div class="insight-row"><div><strong>PL</strong><span>97 deputados · presença média 21.4%</span></div><b>R$ 137,903 mi</b></div>
+<div class="insight-row"><div><strong>PT</strong><span>65 deputados · presença média 20.2%</span></div><b>R$ 99,452 mi</b></div>
+<div class="insight-row"><div><strong>UNIÃO</strong><span>51 deputados · presença média 21.0%</span></div><b>R$ 81,276 mi</b></div>
+<div class="insight-row"><div><strong>PSD</strong><span>48 deputados · presença média 18.9%</span></div><b>R$ 67,181 mi</b></div>
+<div class="insight-row"><div><strong>PP</strong><span>47 deputados · presença média 17.3%</span></div><b>R$ 65,852 mi</b></div>
+<div class="insight-row"><div><strong>MDB</strong><span>38 deputados · presença média 17.8%</span></div><b>R$ 55,137 mi</b></div></div>
+      </div>
+      <div class="card">
+        <h2>Gasto federal por estado</h2>
+        <p class="source-line">Recorte por UF com gasto parlamentar total e presença média relativa.</p>
+        <div class="insight-list"><div class="insight-row"><div><strong>SP</strong><span>70 deputados · presença média 18.7%</span></div><b>R$ 88,092 mi</b></div>
+<div class="insight-row"><div><strong>MG</strong><span>53 deputados · presença média 19.4%</span></div><b>R$ 75,742 mi</b></div>
+<div class="insight-row"><div><strong>RJ</strong><span>46 deputados · presença média 20.9%</span></div><b>R$ 57,722 mi</b></div>
+<div class="insight-row"><div><strong>BA</strong><span>39 deputados · presença média 18.0%</span></div><b>R$ 56,809 mi</b></div>
+<div class="insight-row"><div><strong>RS</strong><span>31 deputados · presença média 20.3%</span></div><b>R$ 46,134 mi</b></div>
+<div class="insight-row"><div><strong>PR</strong><span>30 deputados · presença média 16.1%</span></div><b>R$ 40,578 mi</b></div></div>
+      </div>
     </section>
     </main>
   <footer>
-    Desenvolvido por <strong>Lucca Lanzellotti</strong>. Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Dados atualizados em 04/06/2026.
+    Desenvolvido por <strong>Lucca Lanzellotti</strong>. Fontes: Câmara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Dados atualizados em 04/06/2026.
   </footer>
   <script>
     document.getElementById('openMenu').addEventListener('click', () => document.body.classList.add('menu-open'));
     document.querySelectorAll('[data-close-menu]').forEach(el => el.addEventListener('click', () => document.body.classList.remove('menu-open')));
+    function setupFilterPanels() {
+      document.querySelectorAll('.filter-card').forEach(panel => {
+        if (window.matchMedia('(max-width: 759px)').matches) panel.removeAttribute('open');
+        else panel.setAttribute('open', '');
+      });
+    }
     function money(value) {
       const abs = Math.abs(Number(value || 0));
       const fmt = (div, suffix, digits) => {
@@ -310,6 +373,10 @@
       select.innerHTML = `<option value="">${allLabel}</option>` + values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('');
     }
     function renderBars(target, rows, labelField = 'label', valueField = 'value') {
+      if (!rows.length) {
+        target.innerHTML = '<p class="muted">Sem dados para o filtro atual.</p>';
+        return;
+      }
       const max = Math.max(...rows.map(row => Number(row[valueField] || 0)), 1);
       target.innerHTML = rows.slice(0, 12).map(row => `
         <div class="bar-row">
@@ -329,6 +396,8 @@
         area.remove();
       }
     }
+    setupFilterPanels();
+    window.addEventListener('resize', setupFilterPanels);
     
   </script>
 </body>

@@ -59,5 +59,8 @@ As primeiras trilhas de analise sao:
 
 - O front-end e um site estatico multi-pagina em `reports/`, com landing page e paginas separadas para deputados federais, senadores, deputados estaduais RJ e metodologia.
 - A navegacao usa menu sanduiche lateral para funcionar bem no mobile e no GitHub Pages.
+- A landing page inclui analises agregadas por partido e por UF para orientar a leitura antes da busca por parlamentar.
+- Nas paginas de detalhe, os KPIs aparecem antes dos filtros; no mobile, filtros ficam colapsaveis para reduzir a primeira dobra.
+- CEAPS do Senado deve ser calculada pelo arquivo granular quando o resumo por senador vier zerado, evitando comunicar `R$ 0` como se fosse total real.
 - O foco narrativo e gasto parlamentar e comprometimento com o trabalho. Metricas puramente eleitorais ou catalogos extensos de fontes nao devem disputar espaco com esse objetivo.
 - Categorias de gasto devem reagir aos filtros de parlamentar. No caso estadual, isso usa os lancamentos DOCIGP; no caso federal, usa o arquivo granular de despesas da Camara.

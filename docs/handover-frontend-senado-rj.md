@@ -8,7 +8,7 @@ O projeto tinha dashboard HTML focado em deputados federais/Camara. Foram adicio
 - Deputados estaduais do RJ via TSE: candidatos, eleitos e votos nominais da eleicao de 2022.
 - ALERJ: deputados em exercicio e catalogo de fontes oficiais para transparencia, presenca e atividade legislativa.
 
-Os dados foram gerados, mas ainda nao foram integrados ao front-end. Os arquivos `reports/camara_dashboard.html` e `src/generate_interactive_report.py` ja tinham alteracoes locais de front-end antes desta expansao; preservar essas alteracoes ao integrar.
+Os dados ja foram integrados ao front-end estatico em `reports/`. O arquivo `src/generate_interactive_report.py` e a fonte de verdade para regenerar as paginas; nao editar os HTMLs gerados manualmente.
 
 ## Arquivos de Codigo Novos
 
@@ -174,7 +174,7 @@ Arquivos:
 
 O front-end foi reorganizado como site estatico multi-pagina em `reports/`, em vez de uma pagina unica longa:
 
-- `index.html`: landing page.
+- `index.html`: landing page, com visao geral e agregados por partido e por UF.
 - `deputados-federais.html`: gasto parlamentar, presenca, ausencias e PECs da Camara.
 - `senadores.html`: CEAPS e votacoes nominais do Senado.
 - `deputados-estaduais-rj.html`: gasto parlamentar DOCIGP/ALERJ por deputado e categoria.
@@ -196,6 +196,7 @@ Possiveis cards:
 - Total CEAPS: soma de `valor_reembolsado_total`.
 - Total de votos nominais: soma de `qtd_votos`.
 - Media CEAPS por senador.
+- Observacao de integracao: se `resumo_despesas_ceaps_senadores_mandato.csv` vier com `valor_reembolsado_total` zerado, o gerador consolida CEAPS por nome normalizado a partir de `despesas_ceaps_senadores_mandato.csv`.
 
 Tabela sugerida:
 
@@ -239,7 +240,14 @@ Tabela/cards:
 - Fornecedores
 - Uso do limite
 
-Importante: categorias de gasto devem reagir ao filtro de deputado. Presenca e votacoes estaduais ainda dependem de extracao estruturada adicional; nao exibir proxy sem fonte confiavel.
+Importante: categorias de gasto devem reagir ao filtro de deputado, senador, partido ou UF. Presenca e votacoes estaduais ainda dependem de extracao estruturada adicional; nao exibir proxy sem fonte confiavel.
+
+## Ajustes Mobile e UX
+
+- Topo mobile deve mostrar apenas menu sanduiche e titulo curto; autoria/LinkedIn ficam no drawer e rodape.
+- Filtros das paginas de detalhe ficam colapsaveis no mobile e abertos no desktop.
+- KPIs principais devem aparecer antes dos filtros em deputados federais, senadores e deputados estaduais RJ.
+- A landing deve priorizar gasto parlamentar e sinais de trabalho; evitar secoes de fontes como bloco analitico principal.
 
 ## Cuidados de Front-end
 

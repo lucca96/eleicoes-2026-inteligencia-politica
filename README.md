@@ -94,7 +94,7 @@ O script gera arquivos CSV na pasta `data/raw/camara/`:
 
 O site estatico mobile-first e gerado em:
 
-- `reports/index.html`: landing page.
+- `reports/index.html`: landing page, com visao geral e agregados de gasto federal por partido e por UF.
 - `reports/deputados-federais.html`: Camara dos Deputados.
 - `reports/senadores.html`: Senado Federal.
 - `reports/deputados-estaduais-rj.html`: deputados estaduais do RJ via DOCIGP/ALERJ.
@@ -172,11 +172,12 @@ Abra `reports/index.html` no navegador para navegar pelo site. Cada pagina tem m
 - Diferenca YoY: comparacao do gasto acumulado no ano atual ate o mes corrente contra o mesmo intervalo do ano anterior.
 - Diferenca contra media: quanto o deputado esta acima ou abaixo da media de gasto/presenca do partido ou UF.
 - Ausencias de plenario: presenca formal em sessoes de plenario pelo webservice legado `ListarPresencasParlamentar`, separando justificadas e nao justificadas.
-- Share por categoria: percentual do gasto liquido total do mandato por tipo de despesa, apresentado em barras horizontais. Nas paginas de deputados federais e estaduais, as categorias respondem ao filtro de parlamentar.
+- Share por categoria: percentual do gasto liquido total do mandato por tipo de despesa, apresentado em barras horizontais. Nas paginas de deputados federais, senadores e deputados estaduais, as categorias respondem ao filtro de parlamentar.
+- Agregados da landing: gasto parlamentar federal por partido e por UF, com quantidade de deputados e presenca relativa media.
 - Votos em PECs: votos nominais vinculados a proposicoes do tipo `PEC` nos arquivos anuais de votacoes da Camara.
 - Votos por PEC no dashboard: resumo por deputado e PEC, com voto predominante e contagens de Sim, Nao, Obstrucao/Outros, porque uma mesma PEC pode ter varias votacoes nominais.
 - Gasto medio por candidato do partido: gasto total do partido dividido pela quantidade de deputados atuais do partido.
-- Senadores: gastos usam CEAPS anual do Senado; votacoes usam votacoes nominais por senador nos Dados Abertos do Senado.
+- Senadores: gastos usam CEAPS anual do Senado. Quando o resumo de CEAPS vem zerado, o relatorio consolida o valor pelo arquivo granular `despesas_ceaps_senadores_mandato.csv`; votacoes usam votacoes nominais por senador nos Dados Abertos do Senado.
 - Deputados estaduais RJ: a pagina analitica usa DOCIGP/ALERJ para gasto parlamentar por deputado e categoria. TSE/ALERJ permanecem como fontes de contexto e rastreabilidade, sem pagina analitica separada de eleitos/partidos.
 
 ## Documentacao

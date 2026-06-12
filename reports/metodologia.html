@@ -27,10 +27,9 @@
       background: var(--bg);
       color: var(--ink);
       font-family: Rawline, Raleway, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      overflow-x: clip;
     }
     img, svg, input, select, textarea, button { max-width: 100%; }
-    p, h1, h2, h3, span, strong, label, .card, .notice { min-width: 0; overflow-wrap: anywhere; }
+    p, h1, h2, h3, span, strong, label, summary, .card, .notice { min-width: 0; overflow-wrap: anywhere; }
     a { color: var(--blue); }
     .topbar {
       min-height: 52px;
@@ -46,9 +45,9 @@
       z-index: 20;
       min-width: 0;
       max-width: 100%;
-      overflow: clip;
     }
     .menu-button {
+      flex: 0 0 auto;
       width: 42px;
       height: 42px;
       border: 1px solid #b8c8df;
@@ -63,6 +62,7 @@
       gap: 2px;
       flex: 1 1 auto;
       min-width: 0;
+      max-width: 100%;
     }
     .top-title strong { font-size: 13px; }
     .top-title span { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -76,6 +76,7 @@
       text-decoration: none;
       white-space: nowrap;
     }
+    .topbar .author { display: none; }
     .author i {
       display: inline-grid;
       place-items: center;
@@ -110,6 +111,7 @@
       display: grid;
       align-content: start;
       gap: 12px;
+      max-width: 100%;
     }
     body.menu-open .drawer { transform: translateX(0); }
     body.menu-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
@@ -136,6 +138,7 @@
       margin: 0 auto;
       padding: 18px 14px;
       min-width: 0;
+      overflow-wrap: anywhere;
     }
     .hero {
       display: grid;
@@ -147,7 +150,7 @@
     h1 { margin: 0; font-size: 26px; line-height: 1.12; }
     .subtitle { margin: 0; color: var(--muted); line-height: 1.45; max-width: 100%; }
     main { display: grid; gap: 14px; padding-top: 14px; }
-    .grid { display: grid; gap: 12px; }
+    .grid { display: grid; gap: 12px; min-width: 0; }
     .kpis { grid-template-columns: 1fr; }
     .card {
       background: var(--panel);
@@ -166,6 +169,22 @@
     .accent-green { border-left: 5px solid var(--green); }
     .accent-yellow { border-left: 5px solid var(--yellow); }
     .filters { display: grid; gap: 10px; }
+    .filter-card { padding: 0; overflow: hidden; }
+    .filter-card summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px;
+      color: var(--blue);
+      font-weight: 820;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+    .filter-card summary::-webkit-details-marker { display: none; }
+    .filter-card summary::after { content: "+"; font-size: 20px; line-height: 1; }
+    .filter-card[open] summary::after { content: "−"; }
+    .filter-card .filters { padding: 0 14px 14px; }
     label { display: grid; gap: 6px; color: var(--ink); font-size: 12px; font-weight: 800; text-transform: uppercase; }
     input, select, textarea {
       width: 100%;
@@ -200,14 +219,15 @@
       display: grid;
       gap: 8px;
     }
-    .item-title { display: flex; justify-content: space-between; gap: 8px; align-items: start; font-weight: 820; }
+    .item-title { display: flex; justify-content: space-between; gap: 8px; align-items: start; font-weight: 820; min-width: 0; }
     .item-title small { color: var(--muted); font-weight: 760; }
     .item-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
-    .item-grid span { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; }
+    .item-grid span { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; min-width: 0; }
     .item-grid b { color: var(--ink); }
     .bars { display: grid; gap: 9px; }
     .bar-row { display: grid; gap: 5px; }
-    .bar-head { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 760; }
+    .bar-head { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 760; min-width: 0; }
+    .bar-head span { overflow-wrap: anywhere; }
     .bar-track { height: 10px; border-radius: 999px; background: #e8eef7; overflow: hidden; }
     .bar-fill { height: 100%; border-radius: inherit; background: var(--blue); }
     .notice { border: 1px solid #f4d06f; background: #fff8df; color: #604a00; border-radius: var(--radius); padding: 12px; line-height: 1.4; }
@@ -215,6 +235,18 @@
     .source-line { color: var(--muted); font-size: 12px; line-height: 1.4; }
     .landing-grid { display: grid; gap: 12px; }
     .landing-card { display: grid; text-decoration: none; color: inherit; }
+    .insight-list { display: grid; gap: 10px; }
+    .insight-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }
+    .insight-row:first-child { border-top: 0; padding-top: 0; }
+    .insight-row strong { display: block; }
+    .insight-row span { color: var(--muted); font-size: 12px; }
     footer { color: var(--muted); font-size: 12px; line-height: 1.45; }
     @media (min-width: 760px) {
       .hero, main, footer { padding-left: 24px; padding-right: 24px; }
@@ -225,6 +257,9 @@
       .landing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .topbar { padding-left: 24px; padding-right: 24px; }
+      .topbar .author { display: flex; flex: 0 0 auto; }
+      .filter-card summary { display: none; }
+      .filter-card .filters { padding: 14px; }
     }
   </style>
 </head>
@@ -232,10 +267,10 @@
   <div class="drawer-backdrop" data-close-menu></div>
   <aside class="drawer" aria-label="Menu principal">
     <div class="drawer-head">
-      <div><strong>Painel Politico 2026</strong><span>Dados publicos legislativos</span></div>
+      <div><strong>Painel Político 2026</strong><span>Dados públicos legislativos</span></div>
       <button class="close-button" type="button" data-close-menu aria-label="Fechar menu">×</button>
     </div>
-    <nav class="nav-list"><a class="nav-link " href="index.html">Inicio</a>
+    <nav class="nav-list"><a class="nav-link " href="index.html">Início</a>
 <a class="nav-link " href="deputados-federais.html">Deputados federais</a>
 <a class="nav-link " href="senadores.html">Senadores</a>
 <a class="nav-link " href="deputados-estaduais-rj.html">Deputados estaduais RJ</a>
@@ -244,29 +279,29 @@
   </aside>
   <header class="topbar">
     <button class="menu-button" type="button" id="openMenu" aria-label="Abrir menu">☰</button>
-    <div class="top-title"><strong>Painel Politico 2026</strong><span>Camara, Senado, TSE RJ e ALERJ</span></div>
+    <div class="top-title"><strong>Painel Político 2026</strong><span>Câmara, Senado e ALERJ</span></div>
     <a class="author" href="https://www.linkedin.com/in/lucca-lanzellotti" target="_blank" rel="noopener">Lucca <i>in</i></a>
   </header>
   <section class="hero">
-    <div class="eyebrow">Inteligencia politica por Lucca Lanzellotti</div>
+    <div class="eyebrow">Inteligência política por Lucca Lanzellotti</div>
     <h1>Metodologia e fontes</h1>
-    <p class="subtitle">Fontes, limites e criterio de leitura dos indicadores.</p>
+    <p class="subtitle">Fontes, limites e critério de leitura dos indicadores.</p>
   </section>
   <main>
     <section class="card accent-blue">
       <h2>Metodologia</h2>
-      <p>O painel separa casas legislativas e fontes para evitar comparacoes falsas. Gasto parlamentar, remuneracao, presenca e votacoes so sao exibidos quando ha fonte estruturada suficiente.</p>
-      <p>Maior gasto parlamentar nao significa irregularidade. Menor presenca ou menor volume de votacoes tambem precisa de contexto, agenda, licencas, justificativas e fonte oficial.</p>
+      <p>O painel separa casas legislativas e fontes para evitar comparações falsas. Gasto parlamentar, remuneração, presença e votações só são exibidos quando há fonte estruturada suficiente.</p>
+      <p>Maior gasto parlamentar não significa irregularidade. Menor presença ou menor volume de votações também precisa de contexto, agenda, licenças, justificativas e fonte oficial.</p>
     </section>
     <section class="grid landing-grid">
-      <div class="card"><h3>Camara dos Deputados</h3><p>Dados Abertos da Camara, cota parlamentar, remuneracao estimada, presenca e votacoes em PECs.</p></div>
-      <div class="card"><h3>Senado Federal</h3><p>CEAPS e votacoes nominais dos senadores em exercicio.</p></div>
-      <div class="card"><h3>ALERJ/DOCIGP</h3><p>Descentralizacao Orcamentaria de Custeio Individualizado para Gabinete Parlamentar. Fontes documentais da ALERJ ficam apenas como referencia de auditoria, nao como pagina analitica.</p></div>
+      <div class="card"><h3>Câmara dos Deputados</h3><p>Dados Abertos da Câmara, cota parlamentar, remuneração estimada, presença e votações em PECs.</p></div>
+      <div class="card"><h3>Senado Federal</h3><p>CEAPS e votações nominais dos senadores em exercício.</p></div>
+      <div class="card"><h3>ALERJ/DOCIGP</h3><p>Descentralização Orçamentária de Custeio Individualizado para Gabinete Parlamentar. Fontes documentais da ALERJ ficam apenas como referência de auditoria, não como página analítica.</p></div>
     </section>
     <section class="card">
       <h2>Referencias principais</h2>
       <div class="list">
-        <a href="https://dadosabertos.camara.leg.br" target="_blank" rel="noopener">Dados Abertos da Camara</a>
+        <a href="https://dadosabertos.camara.leg.br" target="_blank" rel="noopener">Dados Abertos da Câmara</a>
         <a href="https://www.senado.gov.br/transparencia/LAI/verba/" target="_blank" rel="noopener">CEAPS Senado</a>
         <a href="https://docigp.alerj.rj.gov.br/transparencia" target="_blank" rel="noopener">DOCIGP/ALERJ</a>
         <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener">Dados Abertos do TSE</a>
@@ -274,11 +309,17 @@
     </section>
     </main>
   <footer>
-    Desenvolvido por <strong>Lucca Lanzellotti</strong>. Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Dados atualizados em 04/06/2026.
+    Desenvolvido por <strong>Lucca Lanzellotti</strong>. Fontes: Câmara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Dados atualizados em 04/06/2026.
   </footer>
   <script>
     document.getElementById('openMenu').addEventListener('click', () => document.body.classList.add('menu-open'));
     document.querySelectorAll('[data-close-menu]').forEach(el => el.addEventListener('click', () => document.body.classList.remove('menu-open')));
+    function setupFilterPanels() {
+      document.querySelectorAll('.filter-card').forEach(panel => {
+        if (window.matchMedia('(max-width: 759px)').matches) panel.removeAttribute('open');
+        else panel.setAttribute('open', '');
+      });
+    }
     function money(value) {
       const abs = Math.abs(Number(value || 0));
       const fmt = (div, suffix, digits) => {
@@ -302,6 +343,10 @@
       select.innerHTML = `<option value="">${allLabel}</option>` + values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('');
     }
     function renderBars(target, rows, labelField = 'label', valueField = 'value') {
+      if (!rows.length) {
+        target.innerHTML = '<p class="muted">Sem dados para o filtro atual.</p>';
+        return;
+      }
       const max = Math.max(...rows.map(row => Number(row[valueField] || 0)), 1);
       target.innerHTML = rows.slice(0, 12).map(row => `
         <div class="bar-row">
@@ -321,6 +366,8 @@
         area.remove();
       }
     }
+    setupFilterPanels();
+    window.addEventListener('resize', setupFilterPanels);
     
   </script>
 </body>

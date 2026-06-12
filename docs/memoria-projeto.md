@@ -10,6 +10,7 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - A documentacao deve usar Markdown e Mermaid.
 - O projeto deve manter rastreabilidade entre dados modelados e identificadores originais das APIs publicas.
 - O front-end publicado passou a ser um site estatico multi-pagina em `reports/`, com `index.html` como landing page e paginas separadas para deputados federais, senadores, deputados estaduais RJ e metodologia.
+- A landing page deve trazer analises menos granulares antes do detalhe individual, incluindo gasto parlamentar federal por partido e por UF.
 - A remuneracao inicial usa o subsidio bruto parlamentar como referencia mensal fixa e deve ser revisada quando a fonte oficial mudar.
 - A presenca inicial vem do arquivo anual `eventosPresencaDeputados-{ano}.csv`, filtrado para o mes atual.
 - A versao de mandato usa a legislatura atual identificada em `deputados_em_exercicio.csv` e consulta `/legislaturas/{id}` para obter inicio e fim do periodo.
@@ -21,9 +22,10 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - A secao "Votos por PEC" do dashboard agrega por deputado e PEC, exibindo voto predominante e contagens, para reduzir peso do HTML e evitar listar todas as votacoes nominais repetidas.
 - A diferenca de media exibida na tabela passou a ser contra a media geral por candidato, nao contra a media do partido.
 - A expansao para o Senado usa `data/raw/senado/`, com lista de senadores em exercicio via Dados Abertos do Senado, CEAPS anual via CSV de transparencia e votacoes nominais por senador.
+- No front-end, CEAPS do Senado deve ser consolidada a partir do arquivo granular de despesas quando o resumo por senador vier zerado, cruzando nomes normalizados.
 - A expansao para deputados estaduais do RJ usa DOCIGP/ALERJ como fonte analitica de gasto parlamentar por deputado e categoria. TSE 2022 e fontes documentais da ALERJ ficam como contexto/rastreabilidade, nao como pagina principal.
 - Fontes ALERJ nao devem aparecer como secao analitica propria no produto final; ficam resumidas em metodologia/fontes. O foco da experiencia e gasto parlamentar x sinais de comprometimento com o trabalho.
-- Em paginas de parlamentares, categorias de gasto devem responder ao filtro de deputado, partido ou UF. Para Camara isso vem do CSV granular de despesas; para RJ vem dos lancamentos DOCIGP.
+- Em paginas de parlamentares, categorias de gasto devem responder ao filtro de deputado, senador, partido ou UF. Para Camara isso vem do CSV granular de despesas; para Senado vem do granular CEAPS; para RJ vem dos lancamentos DOCIGP.
 
 ## Entidades Prioritarias
 
@@ -79,4 +81,6 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
   - `reports/metodologia.html`
   - `reports/camara_dashboard.html` como redirecionamento de compatibilidade.
 - O site e mobile-first, com menu sanduiche lateral em todas as paginas.
+- No mobile, o topo deve ficar enxuto: menu sanduiche e titulo curto. Autoria e LinkedIn ficam no menu lateral e no rodape para evitar overflow.
+- Em paginas de detalhe, os KPIs aparecem antes dos filtros; os filtros ficam colapsaveis no mobile e abertos no desktop.
 - Nome e LinkedIn de Lucca Lanzellotti devem permanecer visiveis em todas as paginas.
