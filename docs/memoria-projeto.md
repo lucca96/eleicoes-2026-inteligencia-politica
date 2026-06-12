@@ -9,7 +9,7 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - Os dados brutos extraidos devem ser salvos em `data/raw/`.
 - A documentacao deve usar Markdown e Mermaid.
 - O projeto deve manter rastreabilidade entre dados modelados e identificadores originais das APIs publicas.
-- O primeiro relatorio interativo e um HTML estatico gerado em `reports/camara_dashboard.html`.
+- O front-end publicado passou a ser um site estatico multi-pagina em `reports/`, com `index.html` como landing page e paginas separadas para deputados federais, senadores, deputados estaduais RJ e metodologia.
 - A remuneracao inicial usa o subsidio bruto parlamentar como referencia mensal fixa e deve ser revisada quando a fonte oficial mudar.
 - A presenca inicial vem do arquivo anual `eventosPresencaDeputados-{ano}.csv`, filtrado para o mes atual.
 - A versao de mandato usa a legislatura atual identificada em `deputados_em_exercicio.csv` e consulta `/legislaturas/{id}` para obter inicio e fim do periodo.
@@ -21,8 +21,9 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - A secao "Votos por PEC" do dashboard agrega por deputado e PEC, exibindo voto predominante e contagens, para reduzir peso do HTML e evitar listar todas as votacoes nominais repetidas.
 - A diferenca de media exibida na tabela passou a ser contra a media geral por candidato, nao contra a media do partido.
 - A expansao para o Senado usa `data/raw/senado/`, com lista de senadores em exercicio via Dados Abertos do Senado, CEAPS anual via CSV de transparencia e votacoes nominais por senador.
-- A expansao para deputados estaduais do RJ usa duas trilhas: TSE para candidatos/eleitos/votacao nominal de 2022 e ALERJ para mandato em exercicio e fontes oficiais de transparencia/atividade legislativa.
-- Para ALERJ, a primeira entrega cataloga URLs oficiais de presenca, beneficios/subsidio, anuarios de atividade legislativa e processo legislativo. Parte da informacao estadual esta em paginas legadas ou PDFs, entao a extracao estruturada completa deve ser incremental e auditavel.
+- A expansao para deputados estaduais do RJ usa DOCIGP/ALERJ como fonte analitica de gasto parlamentar por deputado e categoria. TSE 2022 e fontes documentais da ALERJ ficam como contexto/rastreabilidade, nao como pagina principal.
+- Fontes ALERJ nao devem aparecer como secao analitica propria no produto final; ficam resumidas em metodologia/fontes. O foco da experiencia e gasto parlamentar x sinais de comprometimento com o trabalho.
+- Em paginas de parlamentares, categorias de gasto devem responder ao filtro de deputado, partido ou UF. Para Camara isso vem do CSV granular de despesas; para RJ vem dos lancamentos DOCIGP.
 
 ## Entidades Prioritarias
 
@@ -51,7 +52,7 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - Incluir presenca formal de plenario quando o webservice legado for integrado.
 - Definir parser de PDFs/Notes da ALERJ para transformar anuarios e listas de presenca em fatos estruturados.
 - Definir criterio de conciliacao entre nomes TSE 2022, nomes parlamentares atuais da ALERJ e eventuais suplentes em exercicio.
-- Definir se gastos estaduais serao tratados como beneficios/subsidios por deputado, despesas do Poder Legislativo agregadas ou outra fonte detalhada oficial quando disponivel.
+- Integrar presenca e votacoes estaduais da ALERJ apenas quando houver fatos estruturados confiaveis; nao inferir comprometimento estadual sem fonte propria.
 
 ## Padroes de Saida
 
@@ -66,3 +67,16 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - `src/extract_senado_senadores.py`: gera senadores em exercicio, CEAPS de mandato, resumo de gastos, votos nominais e resumo de votos.
 - `src/extract_tse_deputados_estaduais_rj.py`: gera candidatos e eleitos a deputado estadual do RJ em 2022 com votos nominais agregados.
 - `src/extract_alerj_deputados_rj.py`: gera deputados estaduais em exercicio na ALERJ e catalogo de fontes oficiais de transparencia/atividade legislativa.
+- `src/extract_alerj_docigp.py`: gera deputados, orcamentos, lancamentos e resumos DOCIGP de gasto parlamentar estadual.
+
+## Front-end Atual
+
+- `src/generate_interactive_report.py` gera:
+  - `reports/index.html`
+  - `reports/deputados-federais.html`
+  - `reports/senadores.html`
+  - `reports/deputados-estaduais-rj.html`
+  - `reports/metodologia.html`
+  - `reports/camara_dashboard.html` como redirecionamento de compatibilidade.
+- O site e mobile-first, com menu sanduiche lateral em todas as paginas.
+- Nome e LinkedIn de Lucca Lanzellotti devem permanecer visiveis em todas as paginas.

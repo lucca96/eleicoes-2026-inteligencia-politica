@@ -170,15 +170,18 @@ Arquivos:
     - `url`
     - `observacao`
 
-## Sugestao de Integracao no Dashboard
+## Estado Atual do Front-end
 
-Evitar misturar tudo na tela atual da Camara. A melhor estrutura para o front-end e:
+O front-end foi reorganizado como site estatico multi-pagina em `reports/`, em vez de uma pagina unica longa:
 
-- Tab ou seletor de casa/escopo:
-  - `Camara`
-  - `Senado`
-  - `RJ Estadual`
-  - `Fontes ALERJ`
+- `index.html`: landing page.
+- `deputados-federais.html`: gasto parlamentar, presenca, ausencias e PECs da Camara.
+- `senadores.html`: CEAPS e votacoes nominais do Senado.
+- `deputados-estaduais-rj.html`: gasto parlamentar DOCIGP/ALERJ por deputado e categoria.
+- `metodologia.html`: fontes, metodologia e limites.
+- `camara_dashboard.html`: redirecionamento de compatibilidade.
+
+O produto deve manter foco em gasto parlamentar e sinais de comprometimento com o trabalho. Catalogos extensos de fontes nao devem aparecer como pagina analitica.
 
 ### Senado
 
@@ -213,68 +216,30 @@ Filtros:
 - Senador
 - Ordenacao por CEAPS, qtd votacoes ou votos.
 
-### RJ Estadual - TSE
+### RJ Estadual - DOCIGP/ALERJ
 
 Usar como base principal:
 
-- `deputados_estaduais_rj_eleitos_2022.csv`
+- `docigp_resumo_gastos_deputados_estaduais_rj.csv`
+- `docigp_lancamentos_deputados_estaduais_rj.csv`
 
 Possiveis cards:
 
-- Eleitos: 70.
-- Total de votos nominais.
-- Maior votacao.
-- Partidos com eleitos.
+- Gasto parlamentar DOCIGP.
+- Lancamentos.
+- Fornecedores.
+- Uso do limite.
 
-Tabela sugerida:
-
-- Nome de urna
-- Partido
-- Numero
-- Votos nominais
-- Municipios com voto
-- Genero
-- Cor/raca
-- Grau de instrucao
-- Ocupacao
-
-Filtros:
-
-- Partido
-- Situacao total turno
-- Genero
-- Cor/raca
-- Ordenacao por votos nominais ou municipios com voto.
-
-### RJ Estadual - ALERJ
-
-Usar como base principal:
-
-- `deputados_estaduais_rj_alerj_em_exercicio.csv`
-- `alerj_fontes_transparencia_e_legislativo.csv`
-
-Possiveis cards:
-
-- Deputados em exercicio: 70.
-- Recursos oficiais catalogados: 598.
-- PDFs de atividade legislativa: 522.
-
-Tabela de deputados:
+Tabela/cards:
 
 - Nome
 - Partido
-- Perfil ALERJ
-- Lideranca
+- Gasto parlamentar
+- Lancamentos
+- Fornecedores
+- Uso do limite
 
-Tabela de fontes:
-
-- Tipo
-- Formato
-- Titulo
-- URL
-- Observacao
-
-Importante: por enquanto, ALERJ e uma camada de rastreabilidade oficial, nao uma fato-table completa de presenca/votacoes. As paginas de transparencia testadas nao tinham tabelas HTML diretas; muita coisa esta em PDFs ou sistemas legados.
+Importante: categorias de gasto devem reagir ao filtro de deputado. Presenca e votacoes estaduais ainda dependem de extracao estruturada adicional; nao exibir proxy sem fonte confiavel.
 
 ## Cuidados de Front-end
 
@@ -314,10 +279,4 @@ python -B -c "from pathlib import Path; files=['src/senado_client.py','src/extra
 
 ## Proxima Etapa Recomendada
 
-Integrar primeiro os CSVs agregados no dashboard:
-
-1. Senado por `resumo_despesas_ceaps_senadores_mandato.csv` + `resumo_votos_senadores_mandato.csv`.
-2. RJ estadual TSE por `deputados_estaduais_rj_eleitos_2022.csv`.
-3. ALERJ por `deputados_estaduais_rj_alerj_em_exercicio.csv` + `alerj_fontes_transparencia_e_legislativo.csv`.
-
-Depois, criar uma etapa separada para parsing dos PDFs/portais legados da ALERJ em fatos estruturados de presenca, votacoes e atividade legislativa.
+Criar etapa separada para parsing dos PDFs/portais legados da ALERJ em fatos estruturados de presenca, votacoes e atividade legislativa.

@@ -32,6 +32,11 @@ Construir uma base analitica em Star Schema para apoiar dashboards em Power BI e
 |   |-- project_paths.py
 |   `-- senado_client.py
 |-- reports/
+|   |-- index.html
+|   |-- deputados-federais.html
+|   |-- senadores.html
+|   |-- deputados-estaduais-rj.html
+|   |-- metodologia.html
 |   `-- camara_dashboard.html
 `-- docs/
     |-- contexto-estendido.md
@@ -87,9 +92,14 @@ O script gera arquivos CSV na pasta `data/raw/camara/`:
 - `resumo_votos_pec_deputados_mandato.csv`
 - `resumo_votacoes_pec_mandato.csv`
 
-O relatorio interativo e gerado em:
+O site estatico mobile-first e gerado em:
 
-- `reports/camara_dashboard.html`
+- `reports/index.html`: landing page.
+- `reports/deputados-federais.html`: Camara dos Deputados.
+- `reports/senadores.html`: Senado Federal.
+- `reports/deputados-estaduais-rj.html`: deputados estaduais do RJ via DOCIGP/ALERJ.
+- `reports/metodologia.html`: fontes, metodologia e limites.
+- `reports/camara_dashboard.html`: redirecionamento de compatibilidade para a landing page.
 
 ## Como Executar Senado e RJ Estadual
 
@@ -134,6 +144,7 @@ ALERJ:
 
 ```powershell
 python .\src\extract_alerj_deputados_rj.py
+python .\src\extract_alerj_docigp.py
 ```
 
 Arquivos gerados em `data/raw/alerj/`:
@@ -141,10 +152,15 @@ Arquivos gerados em `data/raw/alerj/`:
 - `deputados_estaduais_rj_alerj_em_exercicio.csv`
 - `alerj_fontes_transparencia_e_legislativo.csv`
 - `alerj_anuario_atividade_legislativa_pdfs.csv`
+- `docigp_deputados_estaduais_rj.csv`
+- `docigp_orcamentos_deputados_estaduais_rj.csv`
+- `docigp_lancamentos_deputados_estaduais_rj.csv`
+- `docigp_resumo_gastos_deputados_estaduais_rj.csv`
+- `docigp_resumo_gastos_categoria_deputados_estaduais_rj.csv`
 
-Observacao: o TSE cobre a dimensao eleitoral dos deputados estaduais do RJ. A ALERJ cobre a lista em exercicio e cataloga fontes oficiais de transparencia, presenca e atividade legislativa; parte dos dados de presenca/votacoes estaduais e publicada em paginas legadas ou PDFs, entao o primeiro passo estadual preserva URLs oficiais rastreaveis antes da extracao semiestruturada.
+Observacao: a pagina estadual prioriza gasto parlamentar DOCIGP por deputado e categoria. Fontes documentais da ALERJ ficam apenas como referencia na metodologia; presenca e votacoes estaduais ainda dependem de extracao estruturada posterior.
 
-Abra esse arquivo no navegador para usar filtros por estado, partido, deputado e ordenacao por custo, gasto do mandato, percentual de presenca, YoY ou custo por presenca.
+Abra `reports/index.html` no navegador para navegar pelo site. Cada pagina tem menu sanduiche lateral, autoria/LinkedIn e roteiro curto para videos/posts.
 
 ## Metricas do Relatorio
 
@@ -156,12 +172,12 @@ Abra esse arquivo no navegador para usar filtros por estado, partido, deputado e
 - Diferenca YoY: comparacao do gasto acumulado no ano atual ate o mes corrente contra o mesmo intervalo do ano anterior.
 - Diferenca contra media: quanto o deputado esta acima ou abaixo da media de gasto/presenca do partido ou UF.
 - Ausencias de plenario: presenca formal em sessoes de plenario pelo webservice legado `ListarPresencasParlamentar`, separando justificadas e nao justificadas.
-- Share por categoria: percentual do gasto liquido total do mandato por tipo de despesa, apresentado em barras horizontais.
+- Share por categoria: percentual do gasto liquido total do mandato por tipo de despesa, apresentado em barras horizontais. Nas paginas de deputados federais e estaduais, as categorias respondem ao filtro de parlamentar.
 - Votos em PECs: votos nominais vinculados a proposicoes do tipo `PEC` nos arquivos anuais de votacoes da Camara.
 - Votos por PEC no dashboard: resumo por deputado e PEC, com voto predominante e contagens de Sim, Nao, Obstrucao/Outros, porque uma mesma PEC pode ter varias votacoes nominais.
 - Gasto medio por candidato do partido: gasto total do partido dividido pela quantidade de deputados atuais do partido.
 - Senadores: gastos usam CEAPS anual do Senado; votacoes usam votacoes nominais por senador nos Dados Abertos do Senado.
-- Deputados estaduais RJ: cadastro eleitoral e votos nominais usam TSE 2022; dados de mandato usam fontes oficiais da ALERJ, com catalogo inicial para presenca, beneficios/subsidio e anuarios de atividade legislativa.
+- Deputados estaduais RJ: a pagina analitica usa DOCIGP/ALERJ para gasto parlamentar por deputado e categoria. TSE/ALERJ permanecem como fontes de contexto e rastreabilidade, sem pagina analitica separada de eleitos/partidos.
 
 ## Documentacao
 

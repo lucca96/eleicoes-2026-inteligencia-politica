@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel de Inteligencia Politica 2026</title>
+  <style>
+    @import url('https://fonts.cdnfonts.com/css/rawline');
+    :root {
+      --bg: #f6f8fb;
+      --panel: #fff;
+      --ink: #071d41;
+      --muted: #5d6873;
+      --line: #d7e0ed;
+      --blue: #1351b4;
+      --green: #168821;
+      --yellow: #ffcd07;
+      --red: #b91c1c;
+      --shadow: 0 10px 24px rgba(7, 29, 65, .08);
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Rawline, Raleway, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x: clip;
+    }
+    img, svg, input, select, textarea, button { max-width: 100%; }
+    p, h1, h2, h3, span, strong, label, .card, .notice { min-width: 0; overflow-wrap: anywhere; }
+    a { color: var(--blue); }
+    .topbar {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      min-width: 0;
+      max-width: 100%;
+      overflow: clip;
+    }
+    .menu-button {
+      width: 42px;
+      height: 42px;
+      border: 1px solid #b8c8df;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--blue);
+      font-size: 22px;
+      font-weight: 760;
+    }
+    .top-title {
+      display: grid;
+      gap: 2px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .top-title strong { font-size: 13px; }
+    .top-title span { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .author {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 760;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .author i {
+      display: inline-grid;
+      place-items: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 2px;
+      background: #0a66c2;
+      color: #fff;
+      font-style: normal;
+      font-size: 11px;
+    }
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 29, 65, .28);
+      z-index: 40;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    .drawer {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: min(86vw, 320px);
+      background: #fff;
+      z-index: 50;
+      transform: translateX(-102%);
+      transition: transform .18s ease;
+      border-right: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+    body.menu-open .drawer { transform: translateX(0); }
+    body.menu-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
+    .drawer-head { display: flex; align-items: start; justify-content: space-between; gap: 10px; }
+    .drawer-head strong { display: block; font-size: 16px; }
+    .drawer-head span { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .close-button { border: 0; background: transparent; font-size: 28px; color: var(--blue); }
+    .nav-list { display: grid; gap: 8px; margin-top: 6px; }
+    .nav-link {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      text-decoration: none;
+      font-weight: 760;
+      color: var(--blue);
+    }
+    .nav-link.is-active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .hero, main, footer {
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 14px;
+      min-width: 0;
+    }
+    .hero {
+      display: grid;
+      gap: 10px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+    .eyebrow { color: var(--blue); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 26px; line-height: 1.12; }
+    .subtitle { margin: 0; color: var(--muted); line-height: 1.45; max-width: 100%; }
+    main { display: grid; gap: 14px; padding-top: 14px; }
+    .grid { display: grid; gap: 12px; }
+    .kpis { grid-template-columns: 1fr; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      min-width: 0;
+      max-width: 100%;
+    }
+    .card h2, .card h3 { margin: 0 0 10px; }
+    .metric-label { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    .metric-value { margin-top: 8px; font-size: 26px; font-weight: 820; color: var(--ink); }
+    .metric-sub { margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .accent-blue { border-left: 5px solid var(--blue); }
+    .accent-green { border-left: 5px solid var(--green); }
+    .accent-yellow { border-left: 5px solid var(--yellow); }
+    .filters { display: grid; gap: 10px; }
+    label { display: grid; gap: 6px; color: var(--ink); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    input, select, textarea {
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      border: 1px solid #b8c8df;
+      border-radius: 14px;
+      padding: 9px 12px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      text-transform: none;
+    }
+    textarea { min-height: 190px; resize: vertical; line-height: 1.45; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .button {
+      min-height: 40px;
+      border: 1px solid #b8c8df;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--blue);
+      padding: 8px 14px;
+      font-weight: 780;
+    }
+    .button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .list { display: grid; gap: 10px; }
+    .item {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }
+    .item-title { display: flex; justify-content: space-between; gap: 8px; align-items: start; font-weight: 820; }
+    .item-title small { color: var(--muted); font-weight: 760; }
+    .item-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .item-grid span { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; }
+    .item-grid b { color: var(--ink); }
+    .bars { display: grid; gap: 9px; }
+    .bar-row { display: grid; gap: 5px; }
+    .bar-head { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 760; }
+    .bar-track { height: 10px; border-radius: 999px; background: #e8eef7; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: inherit; background: var(--blue); }
+    .notice { border: 1px solid #f4d06f; background: #fff8df; color: #604a00; border-radius: var(--radius); padding: 12px; line-height: 1.4; }
+    .muted { color: var(--muted); }
+    .source-line { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .landing-grid { display: grid; gap: 12px; }
+    .landing-card { display: grid; text-decoration: none; color: inherit; }
+    footer { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    @media (min-width: 760px) {
+      .hero, main, footer { padding-left: 24px; padding-right: 24px; }
+      h1 { font-size: 34px; }
+      .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .filters { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; }
+      .two-col { grid-template-columns: minmax(0, 1fr) minmax(320px, .72fr); }
+      .landing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .topbar { padding-left: 24px; padding-right: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="drawer-backdrop" data-close-menu></div>
+  <aside class="drawer" aria-label="Menu principal">
+    <div class="drawer-head">
+      <div><strong>Painel Politico 2026</strong><span>Dados publicos legislativos</span></div>
+      <button class="close-button" type="button" data-close-menu aria-label="Fechar menu">×</button>
+    </div>
+    <nav class="nav-list"><a class="nav-link is-active" href="index.html">Inicio</a>
+<a class="nav-link " href="deputados-federais.html">Deputados federais</a>
+<a class="nav-link " href="senadores.html">Senadores</a>
+<a class="nav-link " href="deputados-estaduais-rj.html">Deputados estaduais RJ</a>
+<a class="nav-link " href="metodologia.html">Metodologia e fontes</a></nav>
+    <a class="author" href="https://www.linkedin.com/in/lucca-lanzellotti" target="_blank" rel="noopener">Lucca Lanzellotti, BI Expert <i>in</i></a>
+  </aside>
+  <header class="topbar">
+    <button class="menu-button" type="button" id="openMenu" aria-label="Abrir menu">☰</button>
+    <div class="top-title"><strong>Painel Politico 2026</strong><span>Camara, Senado, TSE RJ e ALERJ</span></div>
+    <a class="author" href="https://www.linkedin.com/in/lucca-lanzellotti" target="_blank" rel="noopener">Lucca <i>in</i></a>
+  </header>
+  <section class="hero">
+    <div class="eyebrow">Inteligencia politica por Lucca Lanzellotti</div>
+    <h1>Painel de Inteligencia Politica 2026</h1>
+    <p class="subtitle">Gasto parlamentar e sinais de comprometimento com o trabalho em dados publicos legislativos.</p>
+  </section>
+  <main>
+    <section class="grid landing-grid">
+      <a class="card landing-card accent-blue" href="deputados-federais.html">
+        <div class="metric-label">Deputados federais</div>
+        <div class="metric-value">R$ 722,919 mi</div>
+        <div class="metric-sub">Gasto parlamentar, presenca, ausencias e votacoes em PECs.</div>
+      </a>
+      <a class="card landing-card accent-green" href="senadores.html">
+        <div class="metric-label">Senadores</div>
+        <div class="metric-value">R$ 0</div>
+        <div class="metric-sub">Gasto parlamentar CEAPS e votos nominais.</div>
+      </a>
+      <a class="card landing-card accent-yellow" href="deputados-estaduais-rj.html">
+        <div class="metric-label">Deputados estaduais RJ</div>
+        <div class="metric-value">R$ 67,863 mi</div>
+        <div class="metric-sub">Gasto parlamentar DOCIGP por deputado e categoria.</div>
+      </a>
+    </section>
+    <section class="card accent-blue">
+      <h2>O que este painel tenta responder</h2>
+      <p>Quem usa mais recurso publico? Quem aparece menos nos registros disponiveis de trabalho? Quais categorias concentram os gastos quando um parlamentar especifico e filtrado?</p>
+      <p class="muted">O painel aponta padroes para fiscalizacao cidadã. Maior gasto ou menor presenca nao comprovam irregularidade isoladamente.</p>
+    </section>
+    <section class="grid landing-grid">
+      <div class="card"><div class="metric-label">Federais abaixo da mediana de presenca relativa</div><div class="metric-value">256</div></div>
+      <div class="card"><div class="metric-label">Deputados estaduais RJ com gasto DOCIGP</div><div class="metric-value">88</div></div>
+      <div class="card"><div class="metric-label">Senadores com CEAPS no periodo</div><div class="metric-value">81</div></div>
+    </section>
+    </main>
+  <footer>
+    Desenvolvido por <strong>Lucca Lanzellotti</strong>. Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Dados atualizados em 04/06/2026.
+  </footer>
+  <script>
+    document.getElementById('openMenu').addEventListener('click', () => document.body.classList.add('menu-open'));
+    document.querySelectorAll('[data-close-menu]').forEach(el => el.addEventListener('click', () => document.body.classList.remove('menu-open')));
+    function money(value) {
+      const abs = Math.abs(Number(value || 0));
+      const fmt = (div, suffix, digits) => {
+        let text = (Number(value || 0) / div).toLocaleString('pt-BR', { maximumFractionDigits: digits });
+        return `R$ ${text} ${suffix}`;
+      };
+      if (abs >= 1e9) return fmt(1e9, 'bi', 3);
+      if (abs >= 1e6) return fmt(1e6, 'mi', 3);
+      if (abs >= 1e3) return fmt(1e3, 'mil', 1);
+      return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+    }
+    const number = new Intl.NumberFormat('pt-BR');
+    const pct = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    }
+    function sum(rows, field) { return rows.reduce((acc, row) => acc + Number(row[field] || 0), 0); }
+    function avg(rows, field) { return rows.length ? sum(rows, field) / rows.length : 0; }
+    function unique(rows, field) { return [...new Set(rows.map(row => row[field]).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), 'pt-BR')); }
+    function setOptions(select, values, allLabel = 'Todos') {
+      select.innerHTML = `<option value="">${allLabel}</option>` + values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('');
+    }
+    function renderBars(target, rows, labelField = 'label', valueField = 'value') {
+      const max = Math.max(...rows.map(row => Number(row[valueField] || 0)), 1);
+      target.innerHTML = rows.slice(0, 12).map(row => `
+        <div class="bar-row">
+          <div class="bar-head"><span>${escapeHtml(row[labelField])}</span><strong>${money(row[valueField])}</strong></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, Number(row[valueField] || 0) / max * 100)}%"></div></div>
+        </div>
+      `).join('');
+    }
+    function copyText(text) {
+      if (navigator.clipboard) navigator.clipboard.writeText(text);
+      else {
+        const area = document.createElement('textarea');
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+    }
+    
+  </script>
+</body>
+</html>

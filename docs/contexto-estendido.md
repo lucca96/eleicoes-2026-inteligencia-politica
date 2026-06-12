@@ -16,7 +16,7 @@ As primeiras trilhas de analise sao:
 - Ausencias formais em plenario: percentual de ausencias justificadas e nao justificadas por deputado, partido e UF.
 - Votacoes em PECs: historico de votos nominais relacionados a proposicoes do tipo PEC.
 - Senadores: cadastro em exercicio, CEAPS e votacoes nominais.
-- Deputados estaduais do RJ: candidatos/eleitos e votacao nominal via TSE; deputados em exercicio e fontes de presenca/atividade legislativa via ALERJ.
+- Deputados estaduais do RJ: gasto parlamentar por deputado e categoria via DOCIGP/ALERJ; TSE 2022 e fontes documentais ALERJ ficam como contexto/rastreabilidade.
 
 ## Stack Tecnico
 
@@ -34,7 +34,7 @@ As primeiras trilhas de analise sao:
 - Evitar tabelas fato com atributos textuais extensos, salvo quando necessario para auditoria.
 - Preparar o modelo para expansao incremental: primeiro Camara, depois Senado.
 - Separar casas legislativas em `casa_legislativa`, permitindo Camara, Senado e ALERJ sem misturar chaves naturais.
-- Tratar dados estaduais em duas camadas: eleitoral nacional padronizada via TSE e mandato estadual com fonte propria da Assembleia Legislativa.
+- Tratar dados estaduais em camadas separadas: DOCIGP/ALERJ para gasto parlamentar estruturado; TSE para contexto eleitoral; catalogo ALERJ apenas como referencia documental.
 - Separar metrica oficial de presenca em plenario de proxy de presenca em eventos quando as fontes forem diferentes.
 - Usar barras horizontais para share de categorias de gasto, evitando grafico de pizza ou donut.
 
@@ -52,5 +52,12 @@ As primeiras trilhas de analise sao:
 ## Limites Atuais da Camada Estadual
 
 - O TSE e a fonte estruturada para resultado eleitoral de deputados estaduais do RJ.
-- A ALERJ publica parte dos dados de mandato em paginas HTML, paginas legadas e PDFs. Por isso, o primeiro extrator estadual cataloga fontes oficiais e gera a lista de deputados em exercicio.
+- A pagina estadual publicada usa DOCIGP/ALERJ para gasto parlamentar. A ALERJ tambem publica parte dos dados de presenca/votacoes em paginas HTML, paginas legadas e PDFs; essa camada permanece como proxima etapa, sem indicador analitico no front enquanto nao houver fato estruturado.
 - Presenca, votacoes e atividade legislativa estadual devem ser transformadas em fatos estruturados em uma etapa posterior de parsing dos recursos catalogados.
+
+## Front-end Publicado
+
+- O front-end e um site estatico multi-pagina em `reports/`, com landing page e paginas separadas para deputados federais, senadores, deputados estaduais RJ e metodologia.
+- A navegacao usa menu sanduiche lateral para funcionar bem no mobile e no GitHub Pages.
+- O foco narrativo e gasto parlamentar e comprometimento com o trabalho. Metricas puramente eleitorais ou catalogos extensos de fontes nao devem disputar espaco com esse objetivo.
+- Categorias de gasto devem reagir aos filtros de parlamentar. No caso estadual, isso usa os lancamentos DOCIGP; no caso federal, usa o arquivo granular de despesas da Camara.

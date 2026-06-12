@@ -3856,18 +3856,863 @@ Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Consult
 """
 
 
-def save_report(html: str) -> Path:
+def compact_money_label(value: float) -> str:
+    abs_value = abs(float(value or 0))
+
+    def scaled(divisor: float, suffix: str, decimals: int) -> str:
+        number = float(value or 0) / divisor
+        text = f"{number:,.{decimals}f}".rstrip("0").rstrip(".")
+        text = text.replace(",", "X").replace(".", ",").replace("X", ".")
+        return f"R$ {text} {suffix}"
+
+    if abs_value >= 1_000_000_000:
+        return scaled(1_000_000_000, "bi", 3)
+    if abs_value >= 1_000_000:
+        return scaled(1_000_000, "mi", 3)
+    if abs_value >= 1_000:
+        return scaled(1_000, "mil", 1)
+    return f"R$ {float(value or 0):,.0f}".replace(",", ".")
+
+
+def normalize_category_label(value: object) -> str:
+    text = str(value or "").upper()
+    normalized = unicodedata.normalize("NFKD", text)
+    normalized = "".join(char for char in normalized if not unicodedata.combining(char))
+    if "DIVULGA" in normalized:
+        return "Divulgacao parlamentar"
+    if "VEICULO" in normalized or "FRETAMENTO" in normalized:
+        return "Locacao e transporte"
+    if "PASSAGEM AEREA" in normalized:
+        return "Passagens aereas"
+    if "PASSAGENS TERRESTRES" in normalized:
+        return "Passagens terrestres e fluviais"
+    if "ESCRITORIO" in normalized:
+        return "Escritorio de apoio"
+    if "COMBUST" in normalized:
+        return "Combustiveis"
+    if "HOSPEDAGEM" in normalized:
+        return "Hospedagem"
+    if "TELEFONIA" in normalized:
+        return "Telefonia"
+    if "SEGURANCA" in normalized:
+        return "Seguranca"
+    if "TAXI" in normalized or "PEDAGIO" in normalized:
+        return "Taxi, pedagio e estacionamento"
+    if "ALIMENTACAO" in normalized:
+        return "Alimentacao"
+    if "PUBLICA" in normalized:
+        return "Publicacoes"
+    if "POSTAIS" in normalized:
+        return "Servicos postais"
+    if "CURSO" in normalized or "PALESTRA" in normalized or "EVENTO" in normalized:
+        return "Cursos e eventos"
+    if "TOKEN" in normalized or "CERTIFICADO" in normalized:
+        return "Certificados digitais"
+    return "Outros"
+
+
+def normalize_name_key(value: object) -> str:
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    return " ".join(text.upper().split())
+
+
+def load_senate_dataset() -> tuple[pd.DataFrame, pd.DataFrame]:
+    expenses_df = read_csv_if_exists(RAW_SENADO_DIR / "resumo_despesas_ceaps_senadores_mandato.csv")
+    votes_df = read_csv_if_exists(RAW_SENADO_DIR / "resumo_votos_senadores_mandato.csv")
+    if not expenses_df.empty and not votes_df.empty:
+        vote_columns = [
+            "codigoParlamentar",
+            "qtd_votos",
+            "qtd_votacoes",
+            "votos_sim",
+            "votos_nao",
+            "votos_outros",
+        ]
+        senate_df = expenses_df.merge(
+            votes_df[[column for column in vote_columns if column in votes_df.columns]],
+            on="codigoParlamentar",
+            how="left",
+        )
+    else:
+        senate_df = expenses_df.copy()
+
+    for column in [
+        "qtd_lancamentos",
+        "valor_reembolsado_total",
+        "qtd_votos",
+        "qtd_votacoes",
+        "votos_sim",
+        "votos_nao",
+        "votos_outros",
+    ]:
+        if column not in senate_df.columns:
+            senate_df[column] = 0
+        if not senate_df.empty:
+            senate_df[column] = pd.to_numeric(senate_df[column], errors="coerce").fillna(0)
+
+    detail_df = read_csv_if_exists(RAW_SENADO_DIR / "despesas_ceaps_senadores_mandato.csv")
+    if not detail_df.empty and "valorReembolsado" in detail_df.columns:
+        detail_df["valorReembolsado"] = pd.to_numeric(detail_df["valorReembolsado"], errors="coerce").fillna(0)
+        detail_df["categoria"] = detail_df["tipoDespesa"].map(normalize_category_label)
+        category_df = (
+            detail_df.groupby(["nome", "categoria"], dropna=False)
+            .agg(valor=("valorReembolsado", "sum"), qtd=("valorReembolsado", "size"))
+            .reset_index()
+        )
+    else:
+        category_df = pd.DataFrame(columns=["nome", "categoria", "valor", "qtd"])
+    return senate_df, category_df
+
+
+def build_federal_category_detail() -> pd.DataFrame:
+    detail_df = read_csv_if_exists(RAW_CAMARA_DIR / "despesas_deputados_mandato.csv")
+    if detail_df.empty:
+        return pd.DataFrame(columns=["idDeputado", "categoria", "valor", "qtd"])
+    detail_df["valorLiquido"] = pd.to_numeric(detail_df["valorLiquido"], errors="coerce").fillna(0)
+    detail_df["categoria"] = detail_df["tipoDespesa"].map(normalize_category_label)
+    return (
+        detail_df.groupby(["idDeputado", "categoria"], dropna=False)
+        .agg(valor=("valorLiquido", "sum"), qtd=("valorLiquido", "size"))
+        .reset_index()
+    )
+
+
+def load_rj_expense_datasets() -> tuple[pd.DataFrame, pd.DataFrame]:
+    summary_df = read_csv_if_exists(RAW_ALERJ_DIR / "docigp_resumo_gastos_deputados_estaduais_rj.csv")
+    entries_df = read_csv_if_exists(RAW_ALERJ_DIR / "docigp_lancamentos_deputados_estaduais_rj.csv")
+    for column in [
+        "valorGastoParlamentar",
+        "qtdLancamentos",
+        "qtdCategorias",
+        "qtdFornecedores",
+        "valorLimitePeriodo",
+        "qtdMesesComOrcamento",
+        "usoLimitePct",
+    ]:
+        if column not in summary_df.columns:
+            summary_df[column] = 0
+        if not summary_df.empty:
+            summary_df[column] = pd.to_numeric(summary_df[column], errors="coerce").fillna(0)
+
+    if not entries_df.empty:
+        entries_df["valor"] = pd.to_numeric(entries_df["valor"], errors="coerce").fillna(0)
+        entries_df["valorAbsoluto"] = pd.to_numeric(entries_df["valorAbsoluto"], errors="coerce").fillna(0)
+        spending_df = entries_df.loc[
+            (entries_df["valor"] < 0)
+            & ~entries_df["codigoCentroCusto"].astype(str).isin({"1", "2", "3", "4"})
+        ].copy()
+        category_df = (
+            spending_df.groupby(["idDocigpDeputado", "nomeParlamentar", "siglaPartido", "centroCusto"], dropna=False)
+            .agg(valor=("valorAbsoluto", "sum"), qtd=("idLancamento", "count"))
+            .reset_index()
+            .rename(columns={"centroCusto": "categoria"})
+        )
+    else:
+        category_df = pd.DataFrame(columns=["idDocigpDeputado", "nomeParlamentar", "siglaPartido", "categoria", "valor", "qtd"])
+    return summary_df, category_df
+
+
+def json_records(df: pd.DataFrame) -> str:
+    if df.empty:
+        return "[]"
+    clean_df = df.copy()
+    clean_df = clean_df.where(pd.notna(clean_df), None)
+    return json.dumps(clean_df.to_dict(orient="records"), ensure_ascii=False)
+
+
+def site_shell(title: str, subtitle: str, active: str, body: str, script: str = "") -> str:
+    nav_items = [
+        ("index.html", "Inicio", "home"),
+        ("deputados-federais.html", "Deputados federais", "federal"),
+        ("senadores.html", "Senadores", "senado"),
+        ("deputados-estaduais-rj.html", "Deputados estaduais RJ", "estadual"),
+        ("metodologia.html", "Metodologia e fontes", "metodologia"),
+    ]
+    nav_html = "\n".join(
+        f'<a class="nav-link {"is-active" if key == active else ""}" href="{href}">{label}</a>'
+        for href, label, key in nav_items
+    )
+    return f"""<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{title}</title>
+  <style>
+    @import url('https://fonts.cdnfonts.com/css/rawline');
+    :root {{
+      --bg: #f6f8fb;
+      --panel: #fff;
+      --ink: #071d41;
+      --muted: #5d6873;
+      --line: #d7e0ed;
+      --blue: #1351b4;
+      --green: #168821;
+      --yellow: #ffcd07;
+      --red: #b91c1c;
+      --shadow: 0 10px 24px rgba(7, 29, 65, .08);
+      --radius: 8px;
+    }}
+    * {{ box-sizing: border-box; }}
+    html {{ scroll-behavior: smooth; }}
+    body {{
+      margin: 0;
+      min-width: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Rawline, Raleway, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x: clip;
+    }}
+    img, svg, input, select, textarea, button {{ max-width: 100%; }}
+    p, h1, h2, h3, span, strong, label, .card, .notice {{ min-width: 0; overflow-wrap: anywhere; }}
+    a {{ color: var(--blue); }}
+    .topbar {{
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      min-width: 0;
+      max-width: 100%;
+      overflow: clip;
+    }}
+    .menu-button {{
+      width: 42px;
+      height: 42px;
+      border: 1px solid #b8c8df;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--blue);
+      font-size: 22px;
+      font-weight: 760;
+    }}
+    .top-title {{
+      display: grid;
+      gap: 2px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }}
+    .top-title strong {{ font-size: 13px; }}
+    .top-title span {{ color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+    .author {{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 760;
+      text-decoration: none;
+      white-space: nowrap;
+    }}
+    .author i {{
+      display: inline-grid;
+      place-items: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 2px;
+      background: #0a66c2;
+      color: #fff;
+      font-style: normal;
+      font-size: 11px;
+    }}
+    .drawer-backdrop {{
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 29, 65, .28);
+      z-index: 40;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }}
+    .drawer {{
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: min(86vw, 320px);
+      background: #fff;
+      z-index: 50;
+      transform: translateX(-102%);
+      transition: transform .18s ease;
+      border-right: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }}
+    body.menu-open .drawer {{ transform: translateX(0); }}
+    body.menu-open .drawer-backdrop {{ opacity: 1; pointer-events: auto; }}
+    .drawer-head {{ display: flex; align-items: start; justify-content: space-between; gap: 10px; }}
+    .drawer-head strong {{ display: block; font-size: 16px; }}
+    .drawer-head span {{ display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }}
+    .close-button {{ border: 0; background: transparent; font-size: 28px; color: var(--blue); }}
+    .nav-list {{ display: grid; gap: 8px; margin-top: 6px; }}
+    .nav-link {{
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      text-decoration: none;
+      font-weight: 760;
+      color: var(--blue);
+    }}
+    .nav-link.is-active {{ background: var(--blue); color: #fff; border-color: var(--blue); }}
+    .hero, main, footer {{
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 14px;
+      min-width: 0;
+    }}
+    .hero {{
+      display: grid;
+      gap: 10px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }}
+    .eyebrow {{ color: var(--blue); font-size: 12px; font-weight: 800; text-transform: uppercase; }}
+    h1 {{ margin: 0; font-size: 26px; line-height: 1.12; }}
+    .subtitle {{ margin: 0; color: var(--muted); line-height: 1.45; max-width: 100%; }}
+    main {{ display: grid; gap: 14px; padding-top: 14px; }}
+    .grid {{ display: grid; gap: 12px; }}
+    .kpis {{ grid-template-columns: 1fr; }}
+    .card {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      min-width: 0;
+      max-width: 100%;
+    }}
+    .card h2, .card h3 {{ margin: 0 0 10px; }}
+    .metric-label {{ color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }}
+    .metric-value {{ margin-top: 8px; font-size: 26px; font-weight: 820; color: var(--ink); }}
+    .metric-sub {{ margin-top: 6px; color: var(--muted); font-size: 12px; }}
+    .accent-blue {{ border-left: 5px solid var(--blue); }}
+    .accent-green {{ border-left: 5px solid var(--green); }}
+    .accent-yellow {{ border-left: 5px solid var(--yellow); }}
+    .filters {{ display: grid; gap: 10px; }}
+    label {{ display: grid; gap: 6px; color: var(--ink); font-size: 12px; font-weight: 800; text-transform: uppercase; }}
+    input, select, textarea {{
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      border: 1px solid #b8c8df;
+      border-radius: 14px;
+      padding: 9px 12px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      text-transform: none;
+    }}
+    textarea {{ min-height: 190px; resize: vertical; line-height: 1.45; }}
+    .button-row {{ display: flex; flex-wrap: wrap; gap: 8px; }}
+    .button {{
+      min-height: 40px;
+      border: 1px solid #b8c8df;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--blue);
+      padding: 8px 14px;
+      font-weight: 780;
+    }}
+    .button.primary {{ background: var(--blue); color: #fff; border-color: var(--blue); }}
+    .list {{ display: grid; gap: 10px; }}
+    .item {{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }}
+    .item-title {{ display: flex; justify-content: space-between; gap: 8px; align-items: start; font-weight: 820; }}
+    .item-title small {{ color: var(--muted); font-weight: 760; }}
+    .item-grid {{ display: grid; grid-template-columns: 1fr; gap: 8px; }}
+    .item-grid span {{ display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; }}
+    .item-grid b {{ color: var(--ink); }}
+    .bars {{ display: grid; gap: 9px; }}
+    .bar-row {{ display: grid; gap: 5px; }}
+    .bar-head {{ display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 760; }}
+    .bar-track {{ height: 10px; border-radius: 999px; background: #e8eef7; overflow: hidden; }}
+    .bar-fill {{ height: 100%; border-radius: inherit; background: var(--blue); }}
+    .notice {{ border: 1px solid #f4d06f; background: #fff8df; color: #604a00; border-radius: var(--radius); padding: 12px; line-height: 1.4; }}
+    .muted {{ color: var(--muted); }}
+    .source-line {{ color: var(--muted); font-size: 12px; line-height: 1.4; }}
+    .landing-grid {{ display: grid; gap: 12px; }}
+    .landing-card {{ display: grid; text-decoration: none; color: inherit; }}
+    footer {{ color: var(--muted); font-size: 12px; line-height: 1.45; }}
+    @media (min-width: 760px) {{
+      .hero, main, footer {{ padding-left: 24px; padding-right: 24px; }}
+      h1 {{ font-size: 34px; }}
+      .kpis {{ grid-template-columns: repeat(4, minmax(0, 1fr)); }}
+      .filters {{ grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; }}
+      .two-col {{ grid-template-columns: minmax(0, 1fr) minmax(320px, .72fr); }}
+      .landing-grid {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
+      .item-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .topbar {{ padding-left: 24px; padding-right: 24px; }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="drawer-backdrop" data-close-menu></div>
+  <aside class="drawer" aria-label="Menu principal">
+    <div class="drawer-head">
+      <div><strong>Painel Politico 2026</strong><span>Dados publicos legislativos</span></div>
+      <button class="close-button" type="button" data-close-menu aria-label="Fechar menu">×</button>
+    </div>
+    <nav class="nav-list">{nav_html}</nav>
+    <a class="author" href="https://www.linkedin.com/in/lucca-lanzellotti" target="_blank" rel="noopener">Lucca Lanzellotti, BI Expert <i>in</i></a>
+  </aside>
+  <header class="topbar">
+    <button class="menu-button" type="button" id="openMenu" aria-label="Abrir menu">☰</button>
+    <div class="top-title"><strong>Painel Politico 2026</strong><span>Camara, Senado, TSE RJ e ALERJ</span></div>
+    <a class="author" href="https://www.linkedin.com/in/lucca-lanzellotti" target="_blank" rel="noopener">Lucca <i>in</i></a>
+  </header>
+  <section class="hero">
+    <div class="eyebrow">Inteligencia politica por Lucca Lanzellotti</div>
+    <h1>{title}</h1>
+    <p class="subtitle">{subtitle}</p>
+  </section>
+  <main>{body}</main>
+  <footer>
+    Desenvolvido por <strong>Lucca Lanzellotti</strong>. Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Dados atualizados em {latest_data_update_label()}.
+  </footer>
+  <script>
+    document.getElementById('openMenu').addEventListener('click', () => document.body.classList.add('menu-open'));
+    document.querySelectorAll('[data-close-menu]').forEach(el => el.addEventListener('click', () => document.body.classList.remove('menu-open')));
+    function money(value) {{
+      const abs = Math.abs(Number(value || 0));
+      const fmt = (div, suffix, digits) => {{
+        let text = (Number(value || 0) / div).toLocaleString('pt-BR', {{ maximumFractionDigits: digits }});
+        return `R$ ${{text}} ${{suffix}}`;
+      }};
+      if (abs >= 1e9) return fmt(1e9, 'bi', 3);
+      if (abs >= 1e6) return fmt(1e6, 'mi', 3);
+      if (abs >= 1e3) return fmt(1e3, 'mil', 1);
+      return Number(value || 0).toLocaleString('pt-BR', {{ style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }});
+    }}
+    const number = new Intl.NumberFormat('pt-BR');
+    const pct = new Intl.NumberFormat('pt-BR', {{ maximumFractionDigits: 1 }});
+    function escapeHtml(value) {{
+      return String(value ?? '').replace(/[&<>"']/g, char => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[char]));
+    }}
+    function sum(rows, field) {{ return rows.reduce((acc, row) => acc + Number(row[field] || 0), 0); }}
+    function avg(rows, field) {{ return rows.length ? sum(rows, field) / rows.length : 0; }}
+    function unique(rows, field) {{ return [...new Set(rows.map(row => row[field]).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b), 'pt-BR')); }}
+    function setOptions(select, values, allLabel = 'Todos') {{
+      select.innerHTML = `<option value="">${{allLabel}}</option>` + values.map(value => `<option value="${{escapeHtml(value)}}">${{escapeHtml(value)}}</option>`).join('');
+    }}
+    function renderBars(target, rows, labelField = 'label', valueField = 'value') {{
+      const max = Math.max(...rows.map(row => Number(row[valueField] || 0)), 1);
+      target.innerHTML = rows.slice(0, 12).map(row => `
+        <div class="bar-row">
+          <div class="bar-head"><span>${{escapeHtml(row[labelField])}}</span><strong>${{money(row[valueField])}}</strong></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${{Math.max(3, Number(row[valueField] || 0) / max * 100)}}%"></div></div>
+        </div>
+      `).join('');
+    }}
+    function copyText(text) {{
+      if (navigator.clipboard) navigator.clipboard.writeText(text);
+      else {{
+        const area = document.createElement('textarea');
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }}
+    }}
+    {script}
+  </script>
+</body>
+</html>
+"""
+
+
+def render_landing_page(report_df: pd.DataFrame, senate_df: pd.DataFrame, rj_df: pd.DataFrame) -> str:
+    total_federal = compact_money_label(report_df["valor_liquido_total"].sum())
+    total_senate = compact_money_label(senate_df["valor_reembolsado_total"].sum() if not senate_df.empty else 0)
+    total_rj = compact_money_label(rj_df["valorGastoParlamentar"].sum() if not rj_df.empty else 0)
+    low_presence_count = int((report_df["indice_presenca_relativa"] < report_df["indice_presenca_relativa"].median()).sum())
+    body = f"""
+    <section class="grid landing-grid">
+      <a class="card landing-card accent-blue" href="deputados-federais.html">
+        <div class="metric-label">Deputados federais</div>
+        <div class="metric-value">{total_federal}</div>
+        <div class="metric-sub">Gasto parlamentar, presenca, ausencias e votacoes em PECs.</div>
+      </a>
+      <a class="card landing-card accent-green" href="senadores.html">
+        <div class="metric-label">Senadores</div>
+        <div class="metric-value">{total_senate}</div>
+        <div class="metric-sub">Gasto parlamentar CEAPS e votos nominais.</div>
+      </a>
+      <a class="card landing-card accent-yellow" href="deputados-estaduais-rj.html">
+        <div class="metric-label">Deputados estaduais RJ</div>
+        <div class="metric-value">{total_rj}</div>
+        <div class="metric-sub">Gasto parlamentar DOCIGP por deputado e categoria.</div>
+      </a>
+    </section>
+    <section class="card accent-blue">
+      <h2>O que este painel tenta responder</h2>
+      <p>Quem usa mais recurso publico? Quem aparece menos nos registros disponiveis de trabalho? Quais categorias concentram os gastos quando um parlamentar especifico e filtrado?</p>
+      <p class="muted">O painel aponta padroes para fiscalizacao cidadã. Maior gasto ou menor presenca nao comprovam irregularidade isoladamente.</p>
+    </section>
+    <section class="grid landing-grid">
+      <div class="card"><div class="metric-label">Federais abaixo da mediana de presenca relativa</div><div class="metric-value">{low_presence_count}</div></div>
+      <div class="card"><div class="metric-label">Deputados estaduais RJ com gasto DOCIGP</div><div class="metric-value">{len(rj_df)}</div></div>
+      <div class="card"><div class="metric-label">Senadores com CEAPS no periodo</div><div class="metric-value">{len(senate_df)}</div></div>
+    </section>
+    """
+    return site_shell(
+        "Painel de Inteligencia Politica 2026",
+        "Gasto parlamentar e sinais de comprometimento com o trabalho em dados publicos legislativos.",
+        "home",
+        body,
+    )
+
+
+def render_federal_page(report_df: pd.DataFrame, category_df: pd.DataFrame) -> str:
+    body = f"""
+    <section class="card accent-blue">
+      <div class="filters">
+        <label>Deputado<input id="nameFilter" list="federalNames" type="search" placeholder="Pesquisar deputado"></label>
+        <datalist id="federalNames"></datalist>
+        <label>Partido<select id="partyFilter"></select></label>
+        <label>UF<select id="stateFilter"></select></label>
+        <label>Ordenar<select id="sortFilter">
+          <option value="custo_total_estimado">Custo total</option>
+          <option value="valor_liquido_total">Gasto parlamentar</option>
+          <option value="indice_presenca_relativa">Presenca relativa</option>
+          <option value="pct_ausencia_nao_justificada">Ausencia nao justificada</option>
+        </select></label>
+      </div>
+    </section>
+    <section class="grid kpis" id="kpis"></section>
+    <section class="grid two-col">
+      <div class="card">
+        <h2>Deputados por gasto e presenca</h2>
+        <div class="list" id="memberList"></div>
+      </div>
+      <div class="card">
+        <h2>Categorias do gasto parlamentar</h2>
+        <p class="source-line">As categorias mudam conforme deputado, partido ou UF filtrados.</p>
+        <div class="bars" id="categoryBars"></div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Para videos e posts</h2>
+      <textarea id="scriptText" readonly></textarea>
+      <div class="button-row"><button class="button primary" id="copyScript" type="button">Copiar roteiro</button></div>
+    </section>
+    """
+    script = f"""
+    const MEMBERS = {json_records(report_df)};
+    const CATEGORIES = {json_records(category_df)};
+    const nameFilter = document.getElementById('nameFilter');
+    const partyFilter = document.getElementById('partyFilter');
+    const stateFilter = document.getElementById('stateFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    document.getElementById('federalNames').innerHTML = MEMBERS.map(row => `<option value="${{escapeHtml(row.nome)}}">`).join('');
+    setOptions(partyFilter, unique(MEMBERS, 'siglaPartido'));
+    setOptions(stateFilter, unique(MEMBERS, 'siglaUf'));
+    function filteredMembers() {{
+      const name = nameFilter.value.trim().toLowerCase();
+      return MEMBERS.filter(row =>
+        (!name || String(row.nome || '').toLowerCase().includes(name)) &&
+        (!partyFilter.value || row.siglaPartido === partyFilter.value) &&
+        (!stateFilter.value || row.siglaUf === stateFilter.value)
+      ).sort((a,b) => Number(b[sortFilter.value] || 0) - Number(a[sortFilter.value] || 0));
+    }}
+    function filteredCategories(rows) {{
+      const ids = new Set(rows.map(row => Number(row.idDeputado)));
+      const grouped = new Map();
+      CATEGORIES.filter(row => ids.has(Number(row.idDeputado))).forEach(row => {{
+        const current = grouped.get(row.categoria) || {{ label: row.categoria, value: 0 }};
+        current.value += Number(row.valor || 0);
+        grouped.set(row.categoria, current);
+      }});
+      return [...grouped.values()].sort((a,b) => b.value - a.value);
+    }}
+    function renderPage() {{
+      const rows = filteredMembers();
+      const first = rows[0] || {{}};
+      document.getElementById('kpis').innerHTML = `
+        <div class="card accent-green"><div class="metric-label">Gasto parlamentar</div><div class="metric-value">${{money(sum(rows, 'valor_liquido_total'))}}</div></div>
+        <div class="card"><div class="metric-label">Custo total</div><div class="metric-value">${{money(sum(rows, 'custo_total_estimado'))}}</div></div>
+        <div class="card"><div class="metric-label">Presenca relativa media</div><div class="metric-value">${{pct.format(avg(rows, 'indice_presenca_relativa'))}}%</div></div>
+        <div class="card"><div class="metric-label">Ausencia nao justificada media</div><div class="metric-value">${{pct.format(avg(rows, 'pct_ausencia_nao_justificada'))}}%</div></div>
+      `;
+      document.getElementById('memberList').innerHTML = rows.slice(0, 25).map(row => `
+        <article class="item">
+          <div class="item-title"><span>${{escapeHtml(row.nome)}}</span><small>${{escapeHtml(row.siglaPartido)}}-${{escapeHtml(row.siglaUf)}}</small></div>
+          <div class="item-grid">
+            <span>Gasto parlamentar <b>${{money(row.valor_liquido_total)}}</b></span>
+            <span>Custo total <b>${{money(row.custo_total_estimado)}}</b></span>
+            <span>Presenca relativa <b>${{pct.format(Number(row.indice_presenca_relativa || 0))}}%</b></span>
+            <span>Ausencia nao just. <b>${{pct.format(Number(row.pct_ausencia_nao_justificada || 0))}}%</b></span>
+          </div>
+        </article>
+      `).join('');
+      renderBars(document.getElementById('categoryBars'), filteredCategories(rows));
+      document.getElementById('scriptText').value = first.nome
+        ? `Deputado federal ${{first.nome}}, do ${{first.siglaPartido}}-${{first.siglaUf}}: gasto parlamentar de ${{money(first.valor_liquido_total)}} e presenca relativa de ${{pct.format(Number(first.indice_presenca_relativa || 0))}}%. Compare gasto, presenca e ausencias antes de tirar conclusoes. Fonte: dados publicos organizados por Lucca Lanzellotti.`
+        : 'Selecione um deputado para gerar um roteiro.';
+    }}
+    [nameFilter, partyFilter, stateFilter, sortFilter].forEach(el => el.addEventListener('input', renderPage));
+    document.getElementById('copyScript').addEventListener('click', () => copyText(document.getElementById('scriptText').value));
+    renderPage();
+    """
+    return site_shell(
+        "Deputados federais",
+        "Gasto parlamentar, presenca, ausencias e votacoes em PECs dos deputados federais.",
+        "federal",
+        body,
+        script,
+    )
+
+
+def render_senate_page(senate_df: pd.DataFrame, category_df: pd.DataFrame) -> str:
+    body = """
+    <section class="card accent-green">
+      <div class="filters">
+        <label>Senador<input id="nameFilter" list="senateNames" type="search" placeholder="Pesquisar senador"></label>
+        <datalist id="senateNames"></datalist>
+        <label>Partido<select id="partyFilter"></select></label>
+        <label>UF<select id="stateFilter"></select></label>
+        <label>Ordenar<select id="sortFilter">
+          <option value="valor_reembolsado_total">Gasto parlamentar</option>
+          <option value="qtd_votacoes">Votacoes nominais</option>
+          <option value="qtd_votos">Votos registrados</option>
+        </select></label>
+      </div>
+    </section>
+    <section class="grid kpis" id="kpis"></section>
+    <section class="grid two-col">
+      <div class="card"><h2>Senadores por gasto e votacoes</h2><div class="list" id="memberList"></div></div>
+      <div class="card"><h2>Categorias do gasto parlamentar</h2><p class="source-line">As categorias mudam conforme o senador filtrado.</p><div class="bars" id="categoryBars"></div></div>
+    </section>
+    <section class="card"><h2>Para videos e posts</h2><textarea id="scriptText" readonly></textarea><div class="button-row"><button class="button primary" id="copyScript" type="button">Copiar roteiro</button></div></section>
+    """
+    script = f"""
+    const MEMBERS = {json_records(senate_df)};
+    const CATEGORIES = {json_records(category_df)};
+    const nameFilter = document.getElementById('nameFilter');
+    const partyFilter = document.getElementById('partyFilter');
+    const stateFilter = document.getElementById('stateFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    document.getElementById('senateNames').innerHTML = MEMBERS.map(row => `<option value="${{escapeHtml(row.nome)}}">`).join('');
+    setOptions(partyFilter, unique(MEMBERS, 'siglaPartido'));
+    setOptions(stateFilter, unique(MEMBERS, 'siglaUf'));
+    function filteredMembers() {{
+      const name = nameFilter.value.trim().toLowerCase();
+      return MEMBERS.filter(row =>
+        (!name || String(row.nome || '').toLowerCase().includes(name)) &&
+        (!partyFilter.value || row.siglaPartido === partyFilter.value) &&
+        (!stateFilter.value || row.siglaUf === stateFilter.value)
+      ).sort((a,b) => Number(b[sortFilter.value] || 0) - Number(a[sortFilter.value] || 0));
+    }}
+    function filteredCategories(rows) {{
+      const names = new Set(rows.map(row => String(row.nome || '').toUpperCase()));
+      const grouped = new Map();
+      CATEGORIES.filter(row => names.has(String(row.nome || '').toUpperCase())).forEach(row => {{
+        const current = grouped.get(row.categoria) || {{ label: row.categoria, value: 0 }};
+        current.value += Number(row.valor || 0);
+        grouped.set(row.categoria, current);
+      }});
+      return [...grouped.values()].sort((a,b) => b.value - a.value);
+    }}
+    function renderPage() {{
+      const rows = filteredMembers();
+      const first = rows[0] || {{}};
+      document.getElementById('kpis').innerHTML = `
+        <div class="card accent-green"><div class="metric-label">Gasto parlamentar</div><div class="metric-value">${{money(sum(rows, 'valor_reembolsado_total'))}}</div></div>
+        <div class="card"><div class="metric-label">Votacoes nominais</div><div class="metric-value">${{number.format(sum(rows, 'qtd_votacoes'))}}</div></div>
+        <div class="card"><div class="metric-label">Votos registrados</div><div class="metric-value">${{number.format(sum(rows, 'qtd_votos'))}}</div></div>
+        <div class="card"><div class="metric-label">Media por senador</div><div class="metric-value">${{money(avg(rows, 'valor_reembolsado_total'))}}</div></div>
+      `;
+      document.getElementById('memberList').innerHTML = rows.slice(0, 25).map(row => `
+        <article class="item">
+          <div class="item-title"><span>${{escapeHtml(row.nome)}}</span><small>${{escapeHtml(row.siglaPartido)}}-${{escapeHtml(row.siglaUf)}}</small></div>
+          <div class="item-grid">
+            <span>Gasto parlamentar <b>${{money(row.valor_reembolsado_total)}}</b></span>
+            <span>Lancamentos <b>${{number.format(Number(row.qtd_lancamentos || 0))}}</b></span>
+            <span>Votacoes <b>${{number.format(Number(row.qtd_votacoes || 0))}}</b></span>
+            <span>Votos registrados <b>${{number.format(Number(row.qtd_votos || 0))}}</b></span>
+          </div>
+        </article>
+      `).join('');
+      renderBars(document.getElementById('categoryBars'), filteredCategories(rows));
+      document.getElementById('scriptText').value = first.nome
+        ? `Senador ${{first.nome}}, do ${{first.siglaPartido}}-${{first.siglaUf}}: gasto parlamentar CEAPS de ${{money(first.valor_reembolsado_total)}} e ${{number.format(Number(first.qtd_votacoes || 0))}} votacoes nominais registradas. Fonte: dados publicos organizados por Lucca Lanzellotti.`
+        : 'Selecione um senador para gerar um roteiro.';
+    }}
+    [nameFilter, partyFilter, stateFilter, sortFilter].forEach(el => el.addEventListener('input', renderPage));
+    document.getElementById('copyScript').addEventListener('click', () => copyText(document.getElementById('scriptText').value));
+    renderPage();
+    """
+    return site_shell("Senadores", "Gasto parlamentar CEAPS e votos nominais dos senadores em exercicio.", "senado", body, script)
+
+
+def render_state_page(rj_df: pd.DataFrame, category_df: pd.DataFrame) -> str:
+    body = """
+    <section class="card accent-yellow">
+      <div class="filters">
+        <label>Deputado<input id="nameFilter" list="rjNames" type="search" placeholder="Pesquisar deputado estadual"></label>
+        <datalist id="rjNames"></datalist>
+        <label>Partido<select id="partyFilter"></select></label>
+        <label>Ordenar<select id="sortFilter">
+          <option value="valorGastoParlamentar">Gasto parlamentar</option>
+          <option value="qtdLancamentos">Lancamentos</option>
+          <option value="qtdFornecedores">Fornecedores</option>
+          <option value="usoLimitePct">Uso do limite</option>
+        </select></label>
+      </div>
+    </section>
+    <section class="grid kpis" id="kpis"></section>
+    <section class="notice">A ALERJ/DOCIGP ja permite analisar gasto parlamentar estadual por deputado e categoria. Presenca e votacoes estaduais ainda dependem de extracao estruturada; por isso nao aparecem como indicador de comprometimento nesta pagina.</section>
+    <section class="grid two-col">
+      <div class="card"><h2>Deputados estaduais por gasto</h2><div class="list" id="memberList"></div></div>
+      <div class="card"><h2>Categorias do gasto parlamentar</h2><p class="source-line">As categorias mudam conforme o deputado estadual filtrado.</p><div class="bars" id="categoryBars"></div></div>
+    </section>
+    <section class="card"><h2>Para videos e posts</h2><textarea id="scriptText" readonly></textarea><div class="button-row"><button class="button primary" id="copyScript" type="button">Copiar roteiro</button></div></section>
+    """
+    script = f"""
+    const MEMBERS = {json_records(rj_df)};
+    const CATEGORIES = {json_records(category_df)};
+    const nameFilter = document.getElementById('nameFilter');
+    const partyFilter = document.getElementById('partyFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    document.getElementById('rjNames').innerHTML = MEMBERS.map(row => `<option value="${{escapeHtml(row.nomeParlamentar || row.nome)}}">`).join('');
+    setOptions(partyFilter, unique(MEMBERS, 'siglaPartido'));
+    function filteredMembers() {{
+      const name = nameFilter.value.trim().toLowerCase();
+      return MEMBERS.filter(row =>
+        (!name || String(row.nomeParlamentar || row.nome || '').toLowerCase().includes(name)) &&
+        (!partyFilter.value || row.siglaPartido === partyFilter.value)
+      ).sort((a,b) => Number(b[sortFilter.value] || 0) - Number(a[sortFilter.value] || 0));
+    }}
+    function filteredCategories(rows) {{
+      const ids = new Set(rows.map(row => Number(row.idDocigpDeputado)));
+      const grouped = new Map();
+      CATEGORIES.filter(row => ids.has(Number(row.idDocigpDeputado))).forEach(row => {{
+        const current = grouped.get(row.categoria) || {{ label: row.categoria, value: 0 }};
+        current.value += Number(row.valor || 0);
+        grouped.set(row.categoria, current);
+      }});
+      return [...grouped.values()].sort((a,b) => b.value - a.value);
+    }}
+    function renderPage() {{
+      const rows = filteredMembers();
+      const first = rows[0] || {{}};
+      document.getElementById('kpis').innerHTML = `
+        <div class="card accent-green"><div class="metric-label">Gasto parlamentar</div><div class="metric-value">${{money(sum(rows, 'valorGastoParlamentar'))}}</div></div>
+        <div class="card"><div class="metric-label">Lancamentos</div><div class="metric-value">${{number.format(sum(rows, 'qtdLancamentos'))}}</div></div>
+        <div class="card"><div class="metric-label">Fornecedores</div><div class="metric-value">${{number.format(sum(rows, 'qtdFornecedores'))}}</div></div>
+        <div class="card"><div class="metric-label">Uso medio do limite</div><div class="metric-value">${{pct.format(avg(rows, 'usoLimitePct'))}}%</div></div>
+      `;
+      document.getElementById('memberList').innerHTML = rows.slice(0, 25).map(row => `
+        <article class="item">
+          <div class="item-title"><span>${{escapeHtml(row.nomeParlamentar || row.nome)}}</span><small>${{escapeHtml(row.siglaPartido || '')}}</small></div>
+          <div class="item-grid">
+            <span>Gasto parlamentar <b>${{money(row.valorGastoParlamentar)}}</b></span>
+            <span>Lancamentos <b>${{number.format(Number(row.qtdLancamentos || 0))}}</b></span>
+            <span>Fornecedores <b>${{number.format(Number(row.qtdFornecedores || 0))}}</b></span>
+            <span>Uso do limite <b>${{pct.format(Number(row.usoLimitePct || 0))}}%</b></span>
+          </div>
+        </article>
+      `).join('');
+      renderBars(document.getElementById('categoryBars'), filteredCategories(rows));
+      document.getElementById('scriptText').value = first.nomeParlamentar
+        ? `Deputado estadual ${{first.nomeParlamentar}}, do ${{first.siglaPartido || 'partido nao identificado'}}: gasto parlamentar DOCIGP de ${{money(first.valorGastoParlamentar)}} em ${{number.format(Number(first.qtdLancamentos || 0))}} lancamentos. Presenca e votacoes estaduais ainda precisam de fonte estruturada para comparacao justa.`
+        : 'Selecione um deputado estadual para gerar um roteiro.';
+    }}
+    [nameFilter, partyFilter, sortFilter].forEach(el => el.addEventListener('input', renderPage));
+    document.getElementById('copyScript').addEventListener('click', () => copyText(document.getElementById('scriptText').value));
+    renderPage();
+    """
+    return site_shell("Deputados estaduais RJ", "Gasto parlamentar DOCIGP por deputado estadual do Rio de Janeiro.", "estadual", body, script)
+
+
+def render_methodology_page() -> str:
+    body = """
+    <section class="card accent-blue">
+      <h2>Metodologia</h2>
+      <p>O painel separa casas legislativas e fontes para evitar comparacoes falsas. Gasto parlamentar, remuneracao, presenca e votacoes so sao exibidos quando ha fonte estruturada suficiente.</p>
+      <p>Maior gasto parlamentar nao significa irregularidade. Menor presenca ou menor volume de votacoes tambem precisa de contexto, agenda, licencas, justificativas e fonte oficial.</p>
+    </section>
+    <section class="grid landing-grid">
+      <div class="card"><h3>Camara dos Deputados</h3><p>Dados Abertos da Camara, cota parlamentar, remuneracao estimada, presenca e votacoes em PECs.</p></div>
+      <div class="card"><h3>Senado Federal</h3><p>CEAPS e votacoes nominais dos senadores em exercicio.</p></div>
+      <div class="card"><h3>ALERJ/DOCIGP</h3><p>Descentralizacao Orcamentaria de Custeio Individualizado para Gabinete Parlamentar. Fontes documentais da ALERJ ficam apenas como referencia de auditoria, nao como pagina analitica.</p></div>
+    </section>
+    <section class="card">
+      <h2>Referencias principais</h2>
+      <div class="list">
+        <a href="https://dadosabertos.camara.leg.br" target="_blank" rel="noopener">Dados Abertos da Camara</a>
+        <a href="https://www.senado.gov.br/transparencia/LAI/verba/" target="_blank" rel="noopener">CEAPS Senado</a>
+        <a href="https://docigp.alerj.rj.gov.br/transparencia" target="_blank" rel="noopener">DOCIGP/ALERJ</a>
+        <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener">Dados Abertos do TSE</a>
+      </div>
+    </section>
+    """
+    return site_shell("Metodologia e fontes", "Fontes, limites e criterio de leitura dos indicadores.", "metodologia", body)
+
+
+def render_redirect_page() -> str:
+    return """<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="0; url=index.html">
+  <title>Redirecionando</title>
+</head>
+<body>
+  <p>Redirecionando para <a href="index.html">Painel de Inteligencia Politica 2026</a>.</p>
+</body>
+</html>
+"""
+
+
+def save_report_file(filename: str, html: str) -> Path:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = REPORTS_DIR / "camara_dashboard.html"
+    output_path = REPORTS_DIR / filename
     output_path.write_text(html, encoding="utf-8")
     return output_path
 
 
+def save_site(report_df: pd.DataFrame) -> list[Path]:
+    senate_df, senate_category_df = load_senate_dataset()
+    rj_df, rj_category_df = load_rj_expense_datasets()
+    federal_category_df = build_federal_category_detail()
+    pages = {
+        "index.html": render_landing_page(report_df, senate_df, rj_df),
+        "deputados-federais.html": render_federal_page(report_df, federal_category_df),
+        "senadores.html": render_senate_page(senate_df, senate_category_df),
+        "deputados-estaduais-rj.html": render_state_page(rj_df, rj_category_df),
+        "metodologia.html": render_methodology_page(),
+        "camara_dashboard.html": render_redirect_page(),
+    }
+    return [save_report_file(filename, html) for filename, html in pages.items()]
+
+
 def main() -> None:
     report_df = build_report_dataset()
-    output_path = save_report(render_html(report_df))
+    output_paths = save_site(report_df)
     print(f"Registros no relatorio: {len(report_df)}")
-    print(f"Relatorio gerado: {output_path}")
+    print("Relatorios gerados:")
+    for output_path in output_paths:
+        print(f"- {output_path}")
 
 
 if __name__ == "__main__":
