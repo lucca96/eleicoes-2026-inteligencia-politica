@@ -627,7 +627,7 @@ def render_html(report_df: pd.DataFrame) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Relatorio Politico Interativo</title>
+  <title>Painel de Inteligencia Politica 2026</title>
   <style>
     @import url('https://fonts.cdnfonts.com/css/rawline');
     :root {{
@@ -649,8 +649,8 @@ def render_html(report_df: pd.DataFrame) -> str:
     * {{ box-sizing: border-box; }}
     html {{
       width: 100%;
-      overflow-x: hidden;
       scroll-behavior: smooth;
+      scroll-padding-top: var(--sticky-offset, 150px);
       -webkit-text-size-adjust: 100%;
     }}
     body {{
@@ -660,7 +660,14 @@ def render_html(report_df: pd.DataFrame) -> str:
       background: var(--bg);
       color: var(--ink);
       font-family: Rawline, Raleway, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      overflow-x: hidden;
+      overflow-x: clip;
+    }}
+    img, svg, canvas, table, input, select, textarea, button {{
+      max-width: 100%;
+    }}
+    p, h1, h2, h3, span, strong, label, .notice, .source-line, .metric-label, .metric-value, .metric-sub, .pec-desc {{
+      min-width: 0;
+      overflow-wrap: anywhere;
     }}
     .govbar {{
       min-height: 44px;
@@ -735,6 +742,7 @@ def render_html(report_df: pd.DataFrame) -> str:
       max-width: 1380px;
       margin: 0 auto;
       padding: 24px 28px 18px;
+      min-width: 0;
     }}
     .eyebrow {{
       color: var(--gov-blue);
@@ -751,11 +759,13 @@ def render_html(report_df: pd.DataFrame) -> str:
       color: var(--gov-blue-dark);
     }}
     .subtitle {{
+      width: 100%;
       max-width: 860px;
       margin-top: 8px;
       color: var(--muted);
       font-size: 15px;
       line-height: 1.5;
+      overflow-wrap: anywhere;
     }}
     .section-tabs {{
       display: flex;
@@ -783,6 +793,11 @@ def render_html(report_df: pd.DataFrame) -> str:
       font-weight: 680;
       text-decoration: none;
     }}
+    .section-tabs a.is-active {{
+      background: var(--gov-blue);
+      border-color: var(--gov-blue);
+      color: #fff;
+    }}
     .sticky-controls {{
       position: sticky;
       top: 0;
@@ -801,8 +816,11 @@ def render_html(report_df: pd.DataFrame) -> str:
     .sticky-controls .insight-row {{
       display: none;
     }}
+    .section-select-wrap {{
+      display: none;
+    }}
     .sticky-brand {{
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: space-between;
       gap: 14px;
@@ -844,9 +862,11 @@ def render_html(report_df: pd.DataFrame) -> str:
       padding: 0 28px 34px;
       display: grid;
       gap: 18px;
+      min-width: 0;
     }}
     main > section {{
-      scroll-margin-top: 176px;
+      scroll-margin-top: var(--sticky-offset, 150px);
+      min-width: 0;
     }}
     .section-block {{
       display: grid;
@@ -879,6 +899,8 @@ def render_html(report_df: pd.DataFrame) -> str:
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 14px;
+      min-width: 0;
+      max-width: 100%;
     }}
     .filter-actions {{
       display: flex;
@@ -888,6 +910,9 @@ def render_html(report_df: pd.DataFrame) -> str:
     }}
     .filter-actions .action-button {{
       min-height: 34px;
+    }}
+    .is-hidden {{
+      display: none !important;
     }}
     #toggleFilters {{
       display: none;
@@ -903,6 +928,7 @@ def render_html(report_df: pd.DataFrame) -> str:
     }}
     select, input {{
       width: 100%;
+      min-width: 0;
       min-height: 42px;
       border: 1px solid #b8c8df;
       border-radius: 999px;
@@ -1025,9 +1051,10 @@ def render_html(report_df: pd.DataFrame) -> str:
     }}
     .public-intro {{
       display: grid;
-      grid-template-columns: minmax(280px, 1.1fr) minmax(280px, 0.9fr);
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
       gap: 14px;
       align-items: stretch;
+      min-width: 0;
     }}
     .intro-card {{
       display: grid;
@@ -1038,6 +1065,8 @@ def render_html(report_df: pd.DataFrame) -> str:
       border-left: 5px solid var(--gov-blue);
       box-shadow: var(--shadow);
       padding: 18px;
+      min-width: 0;
+      max-width: 100%;
     }}
     .intro-card h2 {{
       margin: 0;
@@ -1052,6 +1081,7 @@ def render_html(report_df: pd.DataFrame) -> str:
     .main-search {{
       display: grid;
       gap: 8px;
+      min-width: 0;
     }}
     .main-search input {{
       min-height: 54px;
@@ -1067,6 +1097,7 @@ def render_html(report_df: pd.DataFrame) -> str:
       padding: 12px 14px;
       font-size: 13px;
       line-height: 1.4;
+      max-width: 100%;
     }}
     .quick-insights {{
       display: grid;
@@ -1622,26 +1653,36 @@ def render_html(report_df: pd.DataFrame) -> str:
         padding-bottom: 24px;
       }}
       main > section {{
-        scroll-margin-top: 248px;
+        scroll-margin-top: var(--sticky-offset, 116px);
       }}
       h1 {{ font-size: 24px; }}
       .subtitle {{ font-size: 14px; }}
       .section-tabs {{
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        padding-bottom: 4px;
+        display: none;
       }}
-      .section-tabs a {{ flex: 0 0 auto; }}
+      .section-select-wrap {{
+        display: grid;
+        gap: 5px;
+        margin-bottom: 8px;
+      }}
+      .section-select-wrap label {{
+        font-size: 11px;
+      }}
+      #sectionSelect {{
+        min-height: 38px;
+        border-radius: 12px;
+      }}
       .sticky-controls {{
         top: 0;
         margin-left: -14px;
         margin-right: -14px;
-        padding: 8px 14px 10px;
+        padding: 8px 14px 9px;
+      }}
+      .sticky-controls.section-block {{
+        gap: 6px;
       }}
       .sticky-brand {{
-        align-items: center;
-        flex-direction: row;
-        gap: 8px;
+        display: none;
       }}
       .sticky-brand-main {{
         flex: 1 1 auto;
@@ -1660,15 +1701,21 @@ def render_html(report_df: pd.DataFrame) -> str:
         font-size: 11px;
       }}
       .sticky-controls .filter-context {{
-        display: none;
+        display: flex;
+        gap: 6px;
+        overflow: hidden;
+        max-height: 34px;
+        margin-top: 6px;
       }}
       #toggleFilters {{
         display: inline-flex;
       }}
+      #clearAllFilters.is-hidden {{
+        display: none;
+      }}
       .sticky-controls.is-filters-collapsed .filters {{
         display: none;
       }}
-      .sticky-controls .section-tabs {{ margin-bottom: 8px; }}
       .sticky-controls .filters {{
         gap: 8px;
         padding: 10px;
@@ -1696,6 +1743,9 @@ def render_html(report_df: pd.DataFrame) -> str:
       }}
       .public-intro, .quick-insights, .profile-card, .profile-grid, .rank-grid, .creator-grid {{
         grid-template-columns: 1fr;
+      }}
+      .public-intro {{
+        margin-top: 0;
       }}
       .avatar {{ width: 58px; height: 58px; font-size: 19px; }}
       .matrix {{ min-height: 300px; }}
@@ -1778,6 +1828,12 @@ def render_html(report_df: pd.DataFrame) -> str:
       .pagination button {{
         width: 100%;
       }}
+      .filter-actions {{
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 6px;
+        margin-bottom: 6px;
+      }}
       .pagination {{
         justify-content: stretch;
       }}
@@ -1815,7 +1871,7 @@ def render_html(report_df: pd.DataFrame) -> str:
         grid-column: auto;
       }}
       main > section {{
-        scroll-margin-top: 250px;
+        scroll-margin-top: var(--sticky-offset, 112px);
       }}
       .kpis {{
         grid-template-columns: 1fr;
@@ -1834,7 +1890,7 @@ def render_html(report_df: pd.DataFrame) -> str:
 <body>
   <div class="govbar">
     <span>Dados públicos legislativos</span>
-    <span>Câmara dos Deputados | Mandato atual</span>
+    <span>Camara, Senado, TSE RJ e ALERJ | Mandato atual</span>
   </div>
   <header>
     <div class="hero">
@@ -1855,8 +1911,8 @@ def render_html(report_df: pd.DataFrame) -> str:
         </div>
       </div>
       <div class="eyebrow">Painel de inteligência política</div>
-      <h1>Relatório Interativo da Câmara</h1>
-      <div class="subtitle">Gasto parlamentar, remuneração estimada, presença em eventos e plenário, ausências, votos em PECs e comparativos YoY.</div>
+      <h1>Painel de Inteligencia Politica 2026</h1>
+      <div class="subtitle">Dados publicos da Camara, Senado, TSE RJ, ALERJ e DOCIGP para comparar gasto parlamentar, remuneracao estimada, presenca, votacoes e recortes eleitorais.</div>
     </div>
   </header>
   <main>
@@ -1869,8 +1925,8 @@ def render_html(report_df: pd.DataFrame) -> str:
             alt="gov.br"
           >
           <div class="sticky-title">
-            <strong>Relatório Interativo da Câmara</strong>
-            <span>Inteligência política por Lucca Lanzellotti</span>
+            <strong>Painel Politico 2026</strong>
+            <span>Camara, Senado, TSE RJ e ALERJ</span>
           </div>
         </div>
         <div class="author-meta">
@@ -1894,6 +1950,9 @@ def render_html(report_df: pd.DataFrame) -> str:
         <a href="#detalhes">Detalhes</a>
         <a href="#metodologia">Metodologia</a>
       </nav>
+      <div class="section-select-wrap">
+        <label>Secoes<select id="sectionSelect" aria-label="Ir para secao do relatorio"></select></label>
+      </div>
       <div class="filter-actions">
         <button class="action-button" type="button" id="toggleFilters">Filtros</button>
         <button class="action-button" type="button" id="clearAllFilters">Limpar filtros</button>
@@ -2358,6 +2417,21 @@ def render_html(report_df: pd.DataFrame) -> str:
     let lastPecRows = [];
     let selectedDeputy = null;
     const sourceText = 'Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Consulta realizada em {data_updated_label}.';
+    const sectionLinks = [
+      ['#visao-geral', 'Visao geral'],
+      ['#buscar-deputado', 'Buscar deputado'],
+      ['#rankings', 'Rankings'],
+      ['#gastos', 'Gasto parlamentar'],
+      ['#presenca', 'Presenca'],
+      ['#pecs', 'Votacoes'],
+      ['#senado', 'Senado'],
+      ['#rj-estadual', 'Gasto RJ'],
+      ['#rj-eleitoral', 'TSE RJ'],
+      ['#fontes-alerj', 'Fontes ALERJ'],
+      ['#videos-posts', 'Videos e posts'],
+      ['#detalhes', 'Detalhes'],
+      ['#metodologia', 'Metodologia']
+    ];
 
     function setOptions(select, values, allLabel) {{
       select.innerHTML = '<option value="">' + allLabel + '</option>' +
@@ -3117,6 +3191,15 @@ Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Consult
         const button = canRemove ? `<button type="button" data-clear-filter="${{item.type}}" aria-label="Remover filtro ${{escapeHtml(item.label)}}">x</button>` : '';
         return `<span class="chip">${{escapeHtml(item.label)}}${{button}}</span>`;
       }}).join('');
+      updateClearFiltersVisibility();
+    }}
+
+    function hasActiveFilters() {{
+      return Boolean(stateFilter.value || partyFilter.value || nameFilter.value.trim() || pecFilter.value.trim() || pecSelect.value || mainSearch.value.trim());
+    }}
+
+    function updateClearFiltersVisibility() {{
+      document.getElementById('clearAllFilters').classList.toggle('is-hidden', !hasActiveFilters());
     }}
 
     function updateSortHeaders() {{
@@ -3200,6 +3283,7 @@ Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Consult
       window.requestAnimationFrame(() => {{
         render();
         updateSortHeaders();
+        updateStickyOffset();
         if (syncUrl) updateUrl();
         setLoading(false);
       }});
@@ -3395,19 +3479,62 @@ Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Consult
 
     function addScopeNavLinks() {{
       const nav = document.querySelector('.section-tabs');
-      const insertBeforeLink = nav?.querySelector('a[href="#videos-posts"]') || nav?.querySelector('a[href="#detalhes"]');
-      if (!nav || !insertBeforeLink || nav.querySelector('a[href="#senado"]')) return;
-      [
-        ['#senado', 'Senado'],
-        ['#rj-estadual', 'Gasto RJ'],
-        ['#rj-eleitoral', 'TSE RJ'],
-        ['#fontes-alerj', 'Fontes ALERJ']
-      ].forEach(([href, label]) => {{
+      if (!nav) return;
+      nav.innerHTML = '';
+      sectionLinks.forEach(([href, label]) => {{
         const link = document.createElement('a');
         link.href = href;
         link.textContent = label;
-        nav.insertBefore(link, insertBeforeLink);
+        link.addEventListener('click', event => {{
+          event.preventDefault();
+          navigateToSection(href);
+        }});
+        nav.appendChild(link);
       }});
+      const sectionSelect = document.getElementById('sectionSelect');
+      sectionSelect.innerHTML = sectionLinks.map(([href, label]) => `<option value="${{href}}">${{label}}</option>`).join('');
+      sectionSelect.addEventListener('change', event => navigateToSection(event.target.value));
+    }}
+
+    function collapseFiltersForAnchor() {{
+      const controls = document.getElementById('visao-geral');
+      controls.classList.add('is-filters-collapsed');
+      document.getElementById('toggleFilters').textContent = 'Filtros';
+      updateStickyOffset();
+    }}
+
+    function navigateToSection(hash, replace = false) {{
+      const target = document.querySelector(hash);
+      if (!target) return;
+      collapseFiltersForAnchor();
+      window.requestAnimationFrame(() => {{
+        target.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+        if (replace) window.history.replaceState(null, '', hash);
+        else window.history.pushState(null, '', hash);
+        updateActiveSection(hash);
+      }});
+    }}
+
+    function scrollToInitialHash() {{
+      if (!window.location.hash) return;
+      collapseFiltersForAnchor();
+      window.requestAnimationFrame(() => {{
+        window.requestAnimationFrame(() => navigateToSection(window.location.hash, true));
+      }});
+    }}
+
+    function updateActiveSection(hash = window.location.hash || '#visao-geral') {{
+      document.querySelectorAll('.section-tabs a').forEach(link => {{
+        link.classList.toggle('is-active', link.getAttribute('href') === hash);
+      }});
+      const sectionSelect = document.getElementById('sectionSelect');
+      if (sectionSelect && sectionLinks.some(([href]) => href === hash)) sectionSelect.value = hash;
+    }}
+
+    function updateStickyOffset() {{
+      const controls = document.getElementById('visao-geral');
+      const height = Math.ceil(controls.getBoundingClientRect().height || 0);
+      document.documentElement.style.setProperty('--sticky-offset', `${{height + 14}}px`);
     }}
 
     function sortByField(rows, field, descending = true) {{
@@ -3558,6 +3685,7 @@ Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Consult
       document.getElementById('toggleFilters').textContent = controls.classList.contains('is-filters-collapsed')
         ? 'Filtros'
         : 'Ocultar filtros';
+      updateStickyOffset();
     }});
     document.getElementById('clearAllFilters').addEventListener('click', () => {{
       stateFilter.value = '';
@@ -3714,6 +3842,14 @@ Fontes: Camara dos Deputados, Senado Federal, TSE, ALERJ e DOCIGP/ALERJ. Consult
     document.getElementById('exportStoryCard').addEventListener('click', exportStoryCard);
     render();
     updateSortHeaders();
+    updateStickyOffset();
+    updateActiveSection();
+    scrollToInitialHash();
+    window.addEventListener('resize', updateStickyOffset);
+    window.addEventListener('hashchange', () => {{
+      updateActiveSection();
+      scrollToInitialHash();
+    }});
   </script>
 </body>
 </html>
