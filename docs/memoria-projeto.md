@@ -20,6 +20,9 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - Votos em PECs usam arquivos anuais `votacoesProposicoes`, `votacoesVotos` e `votacoes`, filtrando `proposicao_siglaTipo = PEC`.
 - A secao "Votos por PEC" do dashboard agrega por deputado e PEC, exibindo voto predominante e contagens, para reduzir peso do HTML e evitar listar todas as votacoes nominais repetidas.
 - A diferenca de media exibida na tabela passou a ser contra a media geral por candidato, nao contra a media do partido.
+- A expansao para o Senado usa `data/raw/senado/`, com lista de senadores em exercicio via Dados Abertos do Senado, CEAPS anual via CSV de transparencia e votacoes nominais por senador.
+- A expansao para deputados estaduais do RJ usa duas trilhas: TSE para candidatos/eleitos/votacao nominal de 2022 e ALERJ para mandato em exercicio e fontes oficiais de transparencia/atividade legislativa.
+- Para ALERJ, a primeira entrega cataloga URLs oficiais de presenca, beneficios/subsidio, anuarios de atividade legislativa e processo legislativo. Parte da informacao estadual esta em paginas legadas ou PDFs, entao a extracao estruturada completa deve ser incremental e auditavel.
 
 ## Entidades Prioritarias
 
@@ -33,6 +36,8 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - Remuneracao parlamentar
 - Votos
 - Presenca parlamentar
+- Candidaturas eleitorais
+- Fontes documentais estaduais
 
 ## Proximas Decisoes Pendentes
 
@@ -44,6 +49,9 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - Definir fonte definitiva para beneficios alem do subsidio, como auxilio-moradia e outras verbas indenizatorias.
 - Definir se a taxa de presenca deve usar eventos, sessoes de plenario ou ambos como denominador.
 - Incluir presenca formal de plenario quando o webservice legado for integrado.
+- Definir parser de PDFs/Notes da ALERJ para transformar anuarios e listas de presenca em fatos estruturados.
+- Definir criterio de conciliacao entre nomes TSE 2022, nomes parlamentares atuais da ALERJ e eventuais suplentes em exercicio.
+- Definir se gastos estaduais serao tratados como beneficios/subsidios por deputado, despesas do Poder Legislativo agregadas ou outra fonte detalhada oficial quando disponivel.
 
 ## Padroes de Saida
 
@@ -52,3 +60,9 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - Documentacao tecnica: `docs/`
 - Codigo de extracao: `src/`
 - Relatorios interativos: `reports/`
+
+## Novos Scripts
+
+- `src/extract_senado_senadores.py`: gera senadores em exercicio, CEAPS de mandato, resumo de gastos, votos nominais e resumo de votos.
+- `src/extract_tse_deputados_estaduais_rj.py`: gera candidatos e eleitos a deputado estadual do RJ em 2022 com votos nominais agregados.
+- `src/extract_alerj_deputados_rj.py`: gera deputados estaduais em exercicio na ALERJ e catalogo de fontes oficiais de transparencia/atividade legislativa.

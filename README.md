@@ -1,6 +1,6 @@
 # Inteligencia de Dados Politicos - Eleicoes 2026
 
-Projeto para extrair, modelar, cruzar e visualizar dados publicos de deputados e senadores, com foco em gastos parlamentares, presenca e historico de votacoes.
+Projeto para extrair, modelar, cruzar e visualizar dados publicos de deputados federais, senadores e deputados estaduais do RJ, com foco em gastos parlamentares, presenca e historico de votacoes.
 
 ## Aviso
 
@@ -20,13 +20,17 @@ Construir uma base analitica em Star Schema para apoiar dashboards em Power BI e
 |   |-- build_camara_remuneracao.py
 |   |-- camara_client.py
 |   |-- camara_legislatura.py
+|   |-- extract_alerj_deputados_rj.py
 |   |-- extract_camara_deputados.py
 |   |-- extract_camara_mandato.py
 |   |-- extract_camara_plenario_presenca.py
 |   |-- extract_camara_presenca.py
 |   |-- extract_camara_votos_pec.py
+|   |-- extract_senado_senadores.py
+|   |-- extract_tse_deputados_estaduais_rj.py
 |   |-- generate_interactive_report.py
-|   `-- project_paths.py
+|   |-- project_paths.py
+|   `-- senado_client.py
 |-- reports/
 |   `-- camara_dashboard.html
 `-- docs/
@@ -87,6 +91,59 @@ O relatorio interativo e gerado em:
 
 - `reports/camara_dashboard.html`
 
+## Como Executar Senado e RJ Estadual
+
+Senado Federal:
+
+```powershell
+python .\src\extract_senado_senadores.py
+```
+
+Para validar rapidamente apenas cadastro e CEAPS, sem baixar votacoes nominais:
+
+```powershell
+python .\src\extract_senado_senadores.py --skip-votes
+```
+
+Para testar o parser de votacoes com uma amostra:
+
+```powershell
+python .\src\extract_senado_senadores.py --max-senators 2
+```
+
+Arquivos gerados em `data/raw/senado/`:
+
+- `senadores_em_exercicio.csv`
+- `despesas_ceaps_senadores_mandato.csv`
+- `resumo_despesas_ceaps_senadores_mandato.csv`
+- `votos_senadores_mandato.csv`
+- `resumo_votos_senadores_mandato.csv`
+
+Deputados estaduais do RJ via TSE:
+
+```powershell
+python .\src\extract_tse_deputados_estaduais_rj.py
+```
+
+Arquivos gerados em `data/raw/tse/`:
+
+- `deputados_estaduais_rj_candidatos_2022.csv`
+- `deputados_estaduais_rj_eleitos_2022.csv`
+
+ALERJ:
+
+```powershell
+python .\src\extract_alerj_deputados_rj.py
+```
+
+Arquivos gerados em `data/raw/alerj/`:
+
+- `deputados_estaduais_rj_alerj_em_exercicio.csv`
+- `alerj_fontes_transparencia_e_legislativo.csv`
+- `alerj_anuario_atividade_legislativa_pdfs.csv`
+
+Observacao: o TSE cobre a dimensao eleitoral dos deputados estaduais do RJ. A ALERJ cobre a lista em exercicio e cataloga fontes oficiais de transparencia, presenca e atividade legislativa; parte dos dados de presenca/votacoes estaduais e publicada em paginas legadas ou PDFs, entao o primeiro passo estadual preserva URLs oficiais rastreaveis antes da extracao semiestruturada.
+
 Abra esse arquivo no navegador para usar filtros por estado, partido, deputado e ordenacao por custo, gasto do mandato, percentual de presenca, YoY ou custo por presenca.
 
 ## Metricas do Relatorio
@@ -103,6 +160,8 @@ Abra esse arquivo no navegador para usar filtros por estado, partido, deputado e
 - Votos em PECs: votos nominais vinculados a proposicoes do tipo `PEC` nos arquivos anuais de votacoes da Camara.
 - Votos por PEC no dashboard: resumo por deputado e PEC, com voto predominante e contagens de Sim, Nao, Obstrucao/Outros, porque uma mesma PEC pode ter varias votacoes nominais.
 - Gasto medio por candidato do partido: gasto total do partido dividido pela quantidade de deputados atuais do partido.
+- Senadores: gastos usam CEAPS anual do Senado; votacoes usam votacoes nominais por senador nos Dados Abertos do Senado.
+- Deputados estaduais RJ: cadastro eleitoral e votos nominais usam TSE 2022; dados de mandato usam fontes oficiais da ALERJ, com catalogo inicial para presenca, beneficios/subsidio e anuarios de atividade legislativa.
 
 ## Documentacao
 
@@ -114,3 +173,7 @@ Abra esse arquivo no navegador para usar filtros por estado, partido, deputado e
 
 - Camara dos Deputados: https://dadosabertos.camara.leg.br/api/v2/
 - Senado Federal: https://legis.senado.leg.br/dadosabertos/docs/
+- CEAPS Senado: https://www.senado.gov.br/transparencia/LAI/verba/
+- TSE Dados Abertos: https://dadosabertos.tse.jus.br/
+- ALERJ: https://www.alerj.rj.gov.br/
+- Portal da Transparencia da ALERJ: https://transparencia.alerj.rj.gov.br/
