@@ -174,7 +174,7 @@ Arquivos:
 
 O front-end foi reorganizado como site estatico multi-pagina em `reports/`, em vez de uma pagina unica longa:
 
-- `index.html`: landing page, com visao geral e agregados por partido e por UF.
+- `index.html`: landing page, com visao geral, agregados por partido/UF e cards de cortes prontos.
 - `deputados-federais.html`: gasto parlamentar, presenca, ausencias e PECs da Camara.
 - `senadores.html`: CEAPS e votacoes nominais do Senado.
 - `deputados-estaduais-rj.html`: gasto parlamentar DOCIGP/ALERJ por deputado e categoria.
@@ -248,6 +248,8 @@ Importante: categorias de gasto devem reagir ao filtro de deputado, senador, par
 - Filtros das paginas de detalhe ficam colapsaveis no mobile e abertos no desktop.
 - KPIs principais devem aparecer antes dos filtros em deputados federais, senadores e deputados estaduais RJ.
 - A landing deve priorizar gasto parlamentar e sinais de trabalho; evitar secoes de fontes como bloco analitico principal.
+- A landing deve transformar dados em narrativa responsavel: titulo, numero principal, tese, contraponto e fonte.
+- A pagina federal inclui rankings editoriais e seletor de tom de roteiro. Manter sempre ressalvas para rankings sensiveis como ausencia nao justificada, custo por presenca e divulgacao parlamentar.
 
 ## Cuidados de Front-end
 

@@ -4061,6 +4061,36 @@ def json_records(df: pd.DataFrame) -> str:
     return json.dumps(clean_df.to_dict(orient="records"), ensure_ascii=False)
 
 
+def story_card(title: str, number: str, thesis: str, counterpoint: str, source: str) -> str:
+    return f"""
+      <article class="story-card">
+        <div class="metric-label">Corte pronto</div>
+        <h3>{html.escape(title)}</h3>
+        <div class="story-number">{html.escape(number)}</div>
+        <p>{html.escape(thesis)}</p>
+        <p><strong>Contraponto:</strong> {html.escape(counterpoint)}</p>
+        <p class="source-line">Fonte: {html.escape(source)}</p>
+      </article>
+    """
+
+
+def top_category_value(category_df: pd.DataFrame, keyword: str) -> tuple[str, float]:
+    if category_df.empty:
+        return "Sem categoria", 0.0
+    mask = category_df["categoria"].astype(str).str.upper().str.contains(keyword.upper(), na=False)
+    filtered_df = category_df.loc[mask]
+    if filtered_df.empty:
+        return "Sem categoria", 0.0
+    grouped_df = (
+        filtered_df.groupby("categoria", dropna=False)
+        .agg(valor=("valor", "sum"))
+        .reset_index()
+        .sort_values("valor", ascending=False)
+    )
+    row = grouped_df.iloc[0]
+    return str(row["categoria"]), float(row["valor"] or 0)
+
+
 def site_shell(title: str, subtitle: str, active: str, body: str, script: str = "") -> str:
     nav_items = [
         ("index.html", "Início", "home"),
@@ -4322,6 +4352,28 @@ def site_shell(title: str, subtitle: str, active: str, body: str, script: str = 
     .insight-row:first-child {{ border-top: 0; padding-top: 0; }}
     .insight-row strong {{ display: block; }}
     .insight-row span {{ color: var(--muted); font-size: 12px; }}
+    .story-grid {{ display: grid; gap: 12px; }}
+    .story-card {{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }}
+    .story-card h3 {{ margin: 0; font-size: 16px; line-height: 1.25; }}
+    .story-card p {{ margin: 0; color: var(--muted); line-height: 1.4; }}
+    .story-number {{ font-size: 22px; font-weight: 820; color: var(--blue); }}
+    .pill-row {{ display: flex; flex-wrap: wrap; gap: 8px; }}
+    .pill {{
+      border: 1px solid #b8c8df;
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 760;
+      background: #fff;
+    }}
     footer {{ color: var(--muted); font-size: 12px; line-height: 1.45; }}
     @media (min-width: 760px) {{
       .hero, main, footer {{ padding-left: 24px; padding-right: 24px; }}
@@ -4330,6 +4382,7 @@ def site_shell(title: str, subtitle: str, active: str, body: str, script: str = 
       .filters {{ grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; }}
       .two-col {{ grid-template-columns: minmax(0, 1fr) minmax(320px, .72fr); }}
       .landing-grid {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
+      .story-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .item-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .topbar {{ padding-left: 24px; padding-right: 24px; }}
       .topbar .author {{ display: flex; flex: 0 0 auto; }}
@@ -4426,7 +4479,13 @@ def site_shell(title: str, subtitle: str, active: str, body: str, script: str = 
 """
 
 
-def render_landing_page(report_df: pd.DataFrame, senate_df: pd.DataFrame, rj_df: pd.DataFrame) -> str:
+def render_landing_page(
+    report_df: pd.DataFrame,
+    senate_df: pd.DataFrame,
+    rj_df: pd.DataFrame,
+    federal_category_df: pd.DataFrame,
+    rj_category_df: pd.DataFrame,
+) -> str:
     total_federal = compact_money_label(report_df["valor_liquido_total"].sum())
     total_senate = compact_money_label(senate_df["valor_reembolsado_total"].sum() if not senate_df.empty else 0)
     total_rj = compact_money_label(rj_df["valorGastoParlamentar"].sum() if not rj_df.empty else 0)
@@ -4465,6 +4524,61 @@ def render_landing_page(report_df: pd.DataFrame, senate_df: pd.DataFrame, rj_df:
                 "</div>"
             )
         return "\n".join(rows)
+
+    top_party = party_df.iloc[0].to_dict() if not party_df.empty else {}
+    top_senator = (
+        senate_df.sort_values("valor_reembolsado_total", ascending=False).iloc[0].to_dict()
+        if not senate_df.empty
+        else {}
+    )
+    top_rj = (
+        rj_df.sort_values("valorGastoParlamentar", ascending=False).iloc[0].to_dict()
+        if not rj_df.empty
+        else {}
+    )
+    comm_label, comm_value = top_category_value(federal_category_df, "DIVULG")
+    transport_label, transport_value = top_category_value(rj_category_df, "VEIC")
+    if transport_value <= 0:
+        transport_label, transport_value = top_category_value(rj_category_df, "FRETA")
+    story_cards = "\n".join(
+        [
+            story_card(
+                f"O partido que mais gastou na Câmara foi {top_party.get('siglaPartido', '-')}",
+                compact_money_label(float(top_party.get("gasto", 0) or 0)),
+                "Use como gancho de ranking por bloco político antes de citar parlamentares individuais.",
+                "Partidos maiores tendem a somar mais deputados; compare também média por parlamentar.",
+                "Dados Abertos da Câmara, cota parlamentar do mandato.",
+            ),
+            story_card(
+                f"Maior categoria federal: {comm_label}",
+                compact_money_label(comm_value),
+                "Comunicação e divulgação costumam render vídeos de fiscalização sobre autopromoção com dinheiro público.",
+                "Divulgação parlamentar pode ser legal; o ponto é analisar fornecedor, conteúdo e finalidade.",
+                "Dados Abertos da Câmara, despesas por tipo.",
+            ),
+            story_card(
+                f"No RJ, transporte pesa em {transport_label}",
+                compact_money_label(transport_value),
+                "O recorte estadual mostra onde o DOCIGP concentra gasto operacional dos gabinetes.",
+                "Transporte pode variar por agenda, base territorial e estrutura do mandato.",
+                "DOCIGP/ALERJ, lançamentos de gasto parlamentar.",
+            ),
+            story_card(
+                f"Maior CEAPS no Senado: {top_senator.get('nome', '-')}",
+                compact_money_label(float(top_senator.get("valor_reembolsado_total", 0) or 0)),
+                "Bom gancho para explicar verba indenizatória e pedir contexto do uso.",
+                "CEAPS reembolsa despesas declaradas; gasto alto não prova irregularidade sem nota e finalidade.",
+                "Senado Federal, CEAPS consolidada por senador.",
+            ),
+            story_card(
+                f"Maior gasto DOCIGP RJ: {top_rj.get('nomeParlamentar', top_rj.get('nome', '-'))}",
+                compact_money_label(float(top_rj.get("valorGastoParlamentar", 0) or 0)),
+                "Serve para o quadro 'quem precisa explicar melhor o uso do gabinete'.",
+                "Sem presença e votações estaduais estruturadas, não compare comprometimento de trabalho nessa página.",
+                "DOCIGP/ALERJ, resumo por deputado estadual.",
+            ),
+        ]
+    )
     body = f"""
     <section class="grid landing-grid">
       <a class="card landing-card accent-blue" href="deputados-federais.html">
@@ -4505,6 +4619,11 @@ def render_landing_page(report_df: pd.DataFrame, senate_df: pd.DataFrame, rj_df:
         <div class="insight-list">{insight_rows(state_df, "siglaUf")}</div>
       </div>
     </section>
+    <section class="card accent-blue">
+      <h2>Top cortes prontos</h2>
+      <p class="source-line">Ganchos editoriais com número principal, contraponto e fonte para vídeos curtos. Use como ponto de partida, não como acusação.</p>
+      <div class="story-grid">{story_cards}</div>
+    </section>
     """
     return site_shell(
         "Painel de Inteligência Política 2026",
@@ -4543,10 +4662,32 @@ def render_federal_page(report_df: pd.DataFrame, category_df: pd.DataFrame) -> s
         <div class="bars" id="categoryBars"></div>
       </div>
     </section>
+    <section class="card accent-blue">
+      <h2>Rankings editoriais</h2>
+      <p class="source-line">Listas prontas para pauta. Cada ranking deve ser lido com contraponto antes de virar critica individual.</p>
+      <div class="story-grid" id="editorialRankings"></div>
+    </section>
+    <section class="card">
+      <h2>Entenda os indicadores</h2>
+      <div class="story-grid">
+        <article class="story-card"><h3>Presenca relativa</h3><p>Compara o volume de presencas registradas em eventos com o maior volume observado entre deputados no periodo. Nao e uma taxa oficial de presenca em plenario.</p></article>
+        <article class="story-card"><h3>Ausencia nao justificada</h3><p>Vem dos registros de plenario disponiveis. Deve ser lida junto com licencas, missoes oficiais, agenda em comissao e quantidade de sessoes no recorte.</p></article>
+        <article class="story-card"><h3>Custo por presenca</h3><p>Divide o custo total estimado pelas presencas em eventos. E util para levantar pergunta, nao para concluir sozinho que houve desperdicio.</p></article>
+        <article class="story-card"><h3>Gasto com divulgacao</h3><p>Divulgacao parlamentar pode ser regular, mas merece analise de fornecedor, conteudo, periodo e relacao com autopromocao.</p></article>
+      </div>
+    </section>
     <section class="card">
       <h2>Para videos e posts</h2>
+      <label>Tom do roteiro<select id="scriptMode">
+        <option value="neutral">Neutro/fact-check</option>
+        <option value="critical">Critica</option>
+        <option value="positive">Elogio</option>
+      </select></label>
       <textarea id="scriptText" readonly></textarea>
-      <div class="button-row"><button class="button primary" id="copyScript" type="button">Copiar roteiro</button></div>
+      <div class="button-row">
+        <button class="button primary" id="copyScript" type="button">Copiar roteiro</button>
+        <button class="button" id="copySources" type="button">Copiar fontes e ressalvas</button>
+      </div>
     </section>
     """
     script = f"""
@@ -4556,6 +4697,7 @@ def render_federal_page(report_df: pd.DataFrame, category_df: pd.DataFrame) -> s
     const partyFilter = document.getElementById('partyFilter');
     const stateFilter = document.getElementById('stateFilter');
     const sortFilter = document.getElementById('sortFilter');
+    const scriptMode = document.getElementById('scriptMode');
     document.getElementById('federalNames').innerHTML = MEMBERS.map(row => `<option value="${{escapeHtml(row.nome)}}">`).join('');
     setOptions(partyFilter, unique(MEMBERS, 'siglaPartido'));
     setOptions(stateFilter, unique(MEMBERS, 'siglaUf'));
@@ -4576,6 +4718,60 @@ def render_federal_page(report_df: pd.DataFrame, category_df: pd.DataFrame) -> s
         grouped.set(row.categoria, current);
       }});
       return [...grouped.values()].sort((a,b) => b.value - a.value);
+    }}
+    function topBy(rows, field, direction = 'desc') {{
+      return [...rows].filter(row => Number(row[field] || 0) > 0)
+        .sort((a,b) => direction === 'asc' ? Number(a[field] || 0) - Number(b[field] || 0) : Number(b[field] || 0) - Number(a[field] || 0))[0];
+    }}
+    function categoryTotalByDeputy(keyword) {{
+      const needle = keyword.toUpperCase();
+      const grouped = new Map();
+      CATEGORIES.filter(row => String(row.categoria || '').toUpperCase().includes(needle)).forEach(row => {{
+        const current = grouped.get(Number(row.idDeputado)) || 0;
+        grouped.set(Number(row.idDeputado), current + Number(row.valor || 0));
+      }});
+      let best = null;
+      grouped.forEach((value, id) => {{
+        const member = MEMBERS.find(row => Number(row.idDeputado) === id);
+        if (member && (!best || value > best.value)) best = {{ ...member, value }};
+      }});
+      return best;
+    }}
+    function editorialCard(title, row, value, note) {{
+      if (!row) return '';
+      return `
+        <article class="story-card">
+          <div class="metric-label">${{escapeHtml(row.siglaPartido || '')}}-${{escapeHtml(row.siglaUf || '')}}</div>
+          <h3>${{escapeHtml(title)}}</h3>
+          <div class="story-number">${{value}}</div>
+          <p><strong>${{escapeHtml(row.nome)}}</strong></p>
+          <p>${{escapeHtml(note)}}</p>
+        </article>
+      `;
+    }}
+    function renderEditorialRankings(rows) {{
+      const medianPresence = rows.length ? [...rows].map(row => Number(row.indice_presenca_relativa || 0)).sort((a,b) => a-b)[Math.floor(rows.length / 2)] : 0;
+      const highSpendLowPresence = [...rows].filter(row => Number(row.indice_presenca_relativa || 0) <= medianPresence).sort((a,b) => Number(b.valor_liquido_total || 0) - Number(a.valor_liquido_total || 0))[0];
+      const lowSpendHighPresence = [...rows].filter(row => Number(row.indice_presenca_relativa || 0) >= medianPresence).sort((a,b) => Number(a.valor_liquido_total || 0) - Number(b.valor_liquido_total || 0))[0];
+      const disclosure = categoryTotalByDeputy('Divulg');
+      const transport = categoryTotalByDeputy('Locacao') || categoryTotalByDeputy('transporte');
+      const absence = topBy(rows, 'pct_ausencia_nao_justificada');
+      const costPresence = topBy(rows, 'custo_por_presenca');
+      document.getElementById('editorialRankings').innerHTML = [
+        editorialCard('Maior gasto com presenca abaixo da mediana', highSpendLowPresence, money(highSpendLowPresence?.valor_liquido_total), 'Bom para perguntar se o gasto se justifica no recorte, com ressalva de licencas e agenda.'),
+        editorialCard('Menor gasto com presenca acima da mediana', lowSpendHighPresence, money(lowSpendHighPresence?.valor_liquido_total), 'Bom para quadro positivo de eficiencia relativa, sem transformar isso em prova de melhor mandato.'),
+        editorialCard('Maior gasto em divulgacao', disclosure, money(disclosure?.value), 'Tema forte para fiscalizar comunicacao e autopromocao com dinheiro publico.'),
+        editorialCard('Maior gasto em transporte', transport, money(transport?.value), 'Compare com UF, distancia de Brasilia e agenda antes de criticar.'),
+        editorialCard('Maior ausencia nao justificada', absence, `${{pct.format(Number(absence?.pct_ausencia_nao_justificada || 0))}}%`, 'Ranking sensivel: nao mede trabalho em comissao, base eleitoral ou missao oficial.'),
+        editorialCard('Maior custo por presenca', costPresence, money(costPresence?.custo_por_presenca), 'Indicador de pergunta editorial, nao de conclusao juridica.')
+      ].join('');
+    }}
+    function scriptFor(row) {{
+      if (!row.nome) return 'Selecione um deputado para gerar um roteiro.';
+      const base = `Deputado federal ${{row.nome}}, do ${{row.siglaPartido}}-${{row.siglaUf}}: gasto parlamentar de ${{money(row.valor_liquido_total)}}, custo total estimado de ${{money(row.custo_total_estimado)}} e presenca relativa de ${{pct.format(Number(row.indice_presenca_relativa || 0))}}%.`;
+      if (scriptMode.value === 'critical') return `${{base}} Pergunta critica: esse nivel de gasto combina com os registros de presenca e votacoes? Antes de concluir, confira justificativas, agenda e tipo de despesa.`;
+      if (scriptMode.value === 'positive') return `${{base}} Leitura positiva possivel: compare se o parlamentar aparece acima da media de presenca ou abaixo da media de gasto do partido/UF antes de elogiar.`;
+      return `${{base}} Leitura neutra: compare gasto, presenca, ausencias e categorias antes de tirar conclusoes. Fonte: dados publicos organizados por Lucca Lanzellotti.`;
     }}
     function renderPage() {{
       const rows = filteredMembers();
@@ -4598,12 +4794,15 @@ def render_federal_page(report_df: pd.DataFrame, category_df: pd.DataFrame) -> s
         </article>
       `).join('');
       renderBars(document.getElementById('categoryBars'), filteredCategories(rows));
+      renderEditorialRankings(rows);
       document.getElementById('scriptText').value = first.nome
         ? `Deputado federal ${{first.nome}}, do ${{first.siglaPartido}}-${{first.siglaUf}}: gasto parlamentar de ${{money(first.valor_liquido_total)}} e presença relativa de ${{pct.format(Number(first.indice_presenca_relativa || 0))}}%. Compare gasto, presença e ausências antes de tirar conclusões. Fonte: dados públicos organizados por Lucca Lanzellotti.`
         : 'Selecione um deputado para gerar um roteiro.';
+      document.getElementById('scriptText').value = scriptFor(first);
     }}
-    [nameFilter, partyFilter, stateFilter, sortFilter].forEach(el => el.addEventListener('input', renderPage));
+    [nameFilter, partyFilter, stateFilter, sortFilter, scriptMode].forEach(el => el.addEventListener('input', renderPage));
     document.getElementById('copyScript').addEventListener('click', () => copyText(document.getElementById('scriptText').value));
+    document.getElementById('copySources').addEventListener('click', () => copyText('Fontes: Dados Abertos da Camara dos Deputados; despesas parlamentares; presenca em eventos; presenca em plenario; votacoes em PECs. Ressalvas: gasto alto nao prova irregularidade; presenca baixa nao mede todo o trabalho parlamentar; ausencia nao justificada precisa ser lida com licencas, missoes oficiais e contexto da agenda.'));
     renderPage();
     """
     return site_shell(
@@ -4833,7 +5032,7 @@ def save_site(report_df: pd.DataFrame) -> list[Path]:
     rj_df, rj_category_df = load_rj_expense_datasets()
     federal_category_df = build_federal_category_detail()
     pages = {
-        "index.html": render_landing_page(report_df, senate_df, rj_df),
+        "index.html": render_landing_page(report_df, senate_df, rj_df, federal_category_df, rj_category_df),
         "deputados-federais.html": render_federal_page(report_df, federal_category_df),
         "senadores.html": render_senate_page(senate_df, senate_category_df),
         "deputados-estaduais-rj.html": render_state_page(rj_df, rj_category_df),

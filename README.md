@@ -94,7 +94,7 @@ O script gera arquivos CSV na pasta `data/raw/camara/`:
 
 O site estatico mobile-first e gerado em:
 
-- `reports/index.html`: landing page, com visao geral e agregados de gasto federal por partido e por UF.
+- `reports/index.html`: landing page, com visao geral, agregados de gasto federal por partido/UF e cards de cortes prontos para conteudo.
 - `reports/deputados-federais.html`: Camara dos Deputados.
 - `reports/senadores.html`: Senado Federal.
 - `reports/deputados-estaduais-rj.html`: deputados estaduais do RJ via DOCIGP/ALERJ.
@@ -174,6 +174,8 @@ Abra `reports/index.html` no navegador para navegar pelo site. Cada pagina tem m
 - Ausencias de plenario: presenca formal em sessoes de plenario pelo webservice legado `ListarPresencasParlamentar`, separando justificadas e nao justificadas.
 - Share por categoria: percentual do gasto liquido total do mandato por tipo de despesa, apresentado em barras horizontais. Nas paginas de deputados federais, senadores e deputados estaduais, as categorias respondem ao filtro de parlamentar.
 - Agregados da landing: gasto parlamentar federal por partido e por UF, com quantidade de deputados e presenca relativa media.
+- Modulos editoriais: a landing traz ganchos com numero, tese, contraponto e fonte; a pagina federal traz rankings prontos como gasto alto com baixa presenca, gasto baixo com alta presenca, divulgacao, transporte, ausencia nao justificada e custo por presenca.
+- Roteiros: a pagina federal permite alternar entre tom neutro/fact-check, critica e elogio, alem de copiar fontes e ressalvas.
 - Votos em PECs: votos nominais vinculados a proposicoes do tipo `PEC` nos arquivos anuais de votacoes da Camara.
 - Votos por PEC no dashboard: resumo por deputado e PEC, com voto predominante e contagens de Sim, Nao, Obstrucao/Outros, porque uma mesma PEC pode ter varias votacoes nominais.
 - Gasto medio por candidato do partido: gasto total do partido dividido pela quantidade de deputados atuais do partido.

@@ -11,6 +11,7 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - O projeto deve manter rastreabilidade entre dados modelados e identificadores originais das APIs publicas.
 - O front-end publicado passou a ser um site estatico multi-pagina em `reports/`, com `index.html` como landing page e paginas separadas para deputados federais, senadores, deputados estaduais RJ e metodologia.
 - A landing page deve trazer analises menos granulares antes do detalhe individual, incluindo gasto parlamentar federal por partido e por UF.
+- A landing tambem deve trazer "cortes prontos" com titulo, numero principal, tese, contraponto e fonte para transformar dado em narrativa responsavel.
 - A remuneracao inicial usa o subsidio bruto parlamentar como referencia mensal fixa e deve ser revisada quando a fonte oficial mudar.
 - A presenca inicial vem do arquivo anual `eventosPresencaDeputados-{ano}.csv`, filtrado para o mes atual.
 - A versao de mandato usa a legislatura atual identificada em `deputados_em_exercicio.csv` e consulta `/legislaturas/{id}` para obter inicio e fim do periodo.
@@ -83,4 +84,5 @@ Este arquivo registra decisoes e contexto duravel para manter consistencia entre
 - O site e mobile-first, com menu sanduiche lateral em todas as paginas.
 - No mobile, o topo deve ficar enxuto: menu sanduiche e titulo curto. Autoria e LinkedIn ficam no menu lateral e no rodape para evitar overflow.
 - Em paginas de detalhe, os KPIs aparecem antes dos filtros; os filtros ficam colapsaveis no mobile e abertos no desktop.
+- A pagina de deputados federais inclui rankings editoriais prontos e seletor de tom do roteiro: neutro/fact-check, critica e elogio. Esses textos devem manter ressalvas juridicas e metodologicas.
 - Nome e LinkedIn de Lucca Lanzellotti devem permanecer visiveis em todas as paginas.

@@ -247,6 +247,28 @@
     .insight-row:first-child { border-top: 0; padding-top: 0; }
     .insight-row strong { display: block; }
     .insight-row span { color: var(--muted); font-size: 12px; }
+    .story-grid { display: grid; gap: 12px; }
+    .story-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }
+    .story-card h3 { margin: 0; font-size: 16px; line-height: 1.25; }
+    .story-card p { margin: 0; color: var(--muted); line-height: 1.4; }
+    .story-number { font-size: 22px; font-weight: 820; color: var(--blue); }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      border: 1px solid #b8c8df;
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 760;
+      background: #fff;
+    }
     footer { color: var(--muted); font-size: 12px; line-height: 1.45; }
     @media (min-width: 760px) {
       .hero, main, footer { padding-left: 24px; padding-right: 24px; }
@@ -255,6 +277,7 @@
       .filters { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; }
       .two-col { grid-template-columns: minmax(0, 1fr) minmax(320px, .72fr); }
       .landing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .story-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .topbar { padding-left: 24px; padding-right: 24px; }
       .topbar .author { display: flex; flex: 0 0 auto; }
@@ -336,6 +359,60 @@
 <div class="insight-row"><div><strong>RS</strong><span>31 deputados · presença média 20.3%</span></div><b>R$ 46,134 mi</b></div>
 <div class="insight-row"><div><strong>PR</strong><span>30 deputados · presença média 16.1%</span></div><b>R$ 40,578 mi</b></div></div>
       </div>
+    </section>
+    <section class="card accent-blue">
+      <h2>Top cortes prontos</h2>
+      <p class="source-line">Ganchos editoriais com número principal, contraponto e fonte para vídeos curtos. Use como ponto de partida, não como acusação.</p>
+      <div class="story-grid">
+      <article class="story-card">
+        <div class="metric-label">Corte pronto</div>
+        <h3>O partido que mais gastou na Câmara foi PL</h3>
+        <div class="story-number">R$ 137,903 mi</div>
+        <p>Use como gancho de ranking por bloco político antes de citar parlamentares individuais.</p>
+        <p><strong>Contraponto:</strong> Partidos maiores tendem a somar mais deputados; compare também média por parlamentar.</p>
+        <p class="source-line">Fonte: Dados Abertos da Câmara, cota parlamentar do mandato.</p>
+      </article>
+    
+
+      <article class="story-card">
+        <div class="metric-label">Corte pronto</div>
+        <h3>Maior categoria federal: Divulgacao parlamentar</h3>
+        <div class="story-number">R$ 292,758 mi</div>
+        <p>Comunicação e divulgação costumam render vídeos de fiscalização sobre autopromoção com dinheiro público.</p>
+        <p><strong>Contraponto:</strong> Divulgação parlamentar pode ser legal; o ponto é analisar fornecedor, conteúdo e finalidade.</p>
+        <p class="source-line">Fonte: Dados Abertos da Câmara, despesas por tipo.</p>
+      </article>
+    
+
+      <article class="story-card">
+        <div class="metric-label">Corte pronto</div>
+        <h3>No RJ, transporte pesa em Locação ou fretamento de veículos automotores</h3>
+        <div class="story-number">R$ 34,899 mi</div>
+        <p>O recorte estadual mostra onde o DOCIGP concentra gasto operacional dos gabinetes.</p>
+        <p><strong>Contraponto:</strong> Transporte pode variar por agenda, base territorial e estrutura do mandato.</p>
+        <p class="source-line">Fonte: DOCIGP/ALERJ, lançamentos de gasto parlamentar.</p>
+      </article>
+    
+
+      <article class="story-card">
+        <div class="metric-label">Corte pronto</div>
+        <h3>Maior CEAPS no Senado: Omar Aziz</h3>
+        <div class="story-number">R$ 1,926 mi</div>
+        <p>Bom gancho para explicar verba indenizatória e pedir contexto do uso.</p>
+        <p><strong>Contraponto:</strong> CEAPS reembolsa despesas declaradas; gasto alto não prova irregularidade sem nota e finalidade.</p>
+        <p class="source-line">Fonte: Senado Federal, CEAPS consolidada por senador.</p>
+      </article>
+    
+
+      <article class="story-card">
+        <div class="metric-label">Corte pronto</div>
+        <h3>Maior gasto DOCIGP RJ: Danniel Librelon</h3>
+        <div class="story-number">R$ 1,178 mi</div>
+        <p>Serve para o quadro &#x27;quem precisa explicar melhor o uso do gabinete&#x27;.</p>
+        <p><strong>Contraponto:</strong> Sem presença e votações estaduais estruturadas, não compare comprometimento de trabalho nessa página.</p>
+        <p class="source-line">Fonte: DOCIGP/ALERJ, resumo por deputado estadual.</p>
+      </article>
+    </div>
     </section>
     </main>
   <footer>
